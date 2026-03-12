@@ -58,13 +58,13 @@ def generate_insights(user):
             insights.append({
                 'type': 'weight_progress',
                 'icon': '📉',
-                'text': f"Осталось всего {diff:.1f} кг до вашей цели. Вы на верном пути!"
+                'text': f"До вашей заветной цели осталось {diff:g} кг. Продолжайте в том же духе!"
             })
         elif diff < 0 and profile.goal == 'mass':
             insights.append({
                 'type': 'weight_progress',
                 'icon': '📈',
-                'text': f"Нужно набрать еще {abs(diff):.1f} кг до цели. Питание — залог успеха!"
+                'text': f"До целевого веса осталось набрать {abs(diff):g} кг. Питание — залог успеха!"
             })
     
     # ── 1. Анализ объема (текущая неделя vs прошлая) ──

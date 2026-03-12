@@ -673,8 +673,8 @@ function initExerciseSelector(row) {
 
     trigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Close all other dropdowns first
-        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown').forEach(d => {
+        // Close all other dropdowns
+        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown, .template-dropdown').forEach(d => {
             if (d !== dropdown) { d.classList.add('hidden'); d.classList.remove('flex'); }
         });
         if (dropdown.classList.contains('hidden')) openDropdown();
@@ -766,8 +766,8 @@ function initCardioSelector(row) {
 
     trigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown').forEach(d => {
-            if (d !== dropdown) { d.classList.add('hidden'); if (d.classList.contains('exercise-dropdown') || d.classList.contains('cardio-dropdown')) d.classList.remove('flex'); }
+        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown, .template-dropdown').forEach(d => {
+            if (d !== dropdown) { d.classList.add('hidden'); d.classList.remove('flex'); }
         });
         if (dropdown.classList.contains('hidden')) openDropdown();
         else closeDropdown();
@@ -813,12 +813,18 @@ document.addEventListener('DOMContentLoaded', function() {
         initCardioSelector(row);
     });
 
-    // Close dropdowns on outside click
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown').forEach(d => { 
-            d.classList.add('hidden'); 
-            if (d.classList.contains('exercise-dropdown')) d.classList.remove('flex');
-        });
+    // Close dropdowns on outside tap/pointer
+    document.addEventListener('pointerdown', (e) => {
+        if (!e.target.closest('.custom-exercise-select') && !e.target.closest('.custom-cardio-select') && !e.target.closest('#template-custom-select')) {
+            document.querySelectorAll('.exercise-dropdown, .cardio-dropdown, .template-dropdown').forEach(d => { 
+                d.classList.add('hidden'); 
+                d.classList.remove('flex');
+            });
+            // Also reset chevrons
+            document.querySelectorAll('.template-chevron, #custom-exercise-chevron').forEach(cv => {
+                cv.style.transform = '';
+            });
+        }
     });
 
     // Add formset button
@@ -959,12 +965,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tplTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (tplDropdown.classList.contains('hidden')) openTplDropdown();
+            const isHidden = tplDropdown.classList.contains('hidden');
+            // Close others
+            document.querySelectorAll('.exercise-dropdown, .cardio-dropdown').forEach(d => {
+                d.classList.add('hidden'); d.classList.remove('flex');
+            });
+            
+            if (isHidden) openTplDropdown();
             else closeTplDropdown();
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!templateCustomSelect.contains(e.target)) closeTplDropdown();
         });
 
         tplCards.forEach(card => {

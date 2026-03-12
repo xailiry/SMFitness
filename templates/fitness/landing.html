@@ -10,18 +10,18 @@
                 <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                 Открытый исходный код
             </div>
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
                 Твой <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-indigo-600 dark:from-brand-400 dark:to-indigo-400">умный</span> фитнес-дневник
             </h1>
             <p class="text-lg sm:text-xl text-gray-500 dark:text-gray-400 mt-6 max-w-2xl leading-relaxed">
                 Записывайте тренировки, отслеживайте прогресс на красивых графиках и получайте персональные рекомендации от <strong class="text-gray-700 dark:text-gray-200">искусственного интеллекта Gemini</strong>.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 mt-10 justify-center lg:justify-start">
-                <a href="{% url 'register' %}" class="btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-brand-500/25 hover:shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+            <div class="flex flex-col sm:flex-row gap-3 mt-8 justify-center lg:justify-start px-4 sm:px-0">
+                <a href="{% url 'register' %}" class="btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-base sm:text-lg shadow-xl shadow-brand-500/25 hover:shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                     Начать бесплатно
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </a>
-                <a href="{% url 'login' %}" class="bg-white dark:bg-dark-700 text-gray-700 dark:text-gray-200 px-8 py-4 rounded-2xl font-bold text-lg border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
+                <a href="{% url 'login' %}" class="bg-white dark:bg-dark-700 text-gray-700 dark:text-gray-200 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-base sm:text-lg border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
                     Войти в аккаунт
                 </a>
             </div>
@@ -36,17 +36,17 @@
                         <div><p class="font-bold text-gray-900 dark:text-white">Сегодня, 9 марта</p><p class="text-xs text-gray-500 dark:text-gray-400">3 упражнения • 45 мин</p></div>
                     </div>
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center bg-white/80 dark:bg-dark-800/80 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-red-400"></div><span class="text-sm font-semibold dark:text-gray-200">Жим лёжа</span></div>
-                            <span class="text-xs font-bold bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2.5 py-1 rounded-lg">4×8 / 80 кг</span>
+                        <div class="flex justify-between items-center bg-white/80 dark:bg-dark-800/80 p-3 rounded-xl border border-gray-100 dark:border-gray-700 gap-2">
+                            <div class="flex items-center gap-2 min-w-0"><div class="w-2 h-2 rounded-full bg-red-400 flex-shrink-0"></div><span class="text-sm font-semibold dark:text-gray-200 truncate">Жим лёжа</span></div>
+                            <span class="text-[10px] font-bold bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2 py-1 rounded-lg whitespace-nowrap">4×8 / 80 кг</span>
                         </div>
-                        <div class="flex justify-between items-center bg-white/80 dark:bg-dark-800/80 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-400"></div><span class="text-sm font-semibold dark:text-gray-200">Приседания</span></div>
-                            <span class="text-xs font-bold bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2.5 py-1 rounded-lg">4×6 / 120 кг</span>
+                        <div class="flex justify-between items-center bg-white/80 dark:bg-dark-800/80 p-3 rounded-xl border border-gray-100 dark:border-gray-700 gap-2">
+                            <div class="flex items-center gap-2 min-w-0"><div class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></div><span class="text-sm font-semibold dark:text-gray-200 truncate">Приседания</span></div>
+                            <span class="text-[10px] font-bold bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2 py-1 rounded-lg whitespace-nowrap">4×6 / 120 кг</span>
                         </div>
-                        <div class="flex justify-between items-center bg-white/80 dark:bg-dark-800/80 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-sm font-semibold dark:text-gray-200">Подтягивания</span></div>
-                            <span class="text-xs font-bold bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2.5 py-1 rounded-lg">3×12 / 10 кг</span>
+                        <div class="flex justify-between items-center bg-white/80 dark:bg-dark-800/80 p-3 rounded-xl border border-gray-100 dark:border-gray-700 gap-2">
+                            <div class="flex items-center gap-2 min-w-0"><div class="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></div><span class="text-sm font-semibold dark:text-gray-200 truncate">Подтягивания</span></div>
+                            <span class="text-[10px] font-bold bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2 py-1 rounded-lg whitespace-nowrap">3×12 / 10 кг</span>
                         </div>
                     </div>
                     <div class="mt-5 bg-gradient-to-r from-indigo-50 to-brand-50 dark:from-indigo-900/30 dark:to-brand-900/30 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800">
@@ -127,9 +127,9 @@
         <div class="relative z-10">
             <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Готовы начать тренироваться умнее?</h2>
             <p class="mt-4 text-lg text-brand-100 max-w-xl mx-auto">Присоединяйтесь и начните отслеживать путь к идеальному телу.</p>
-            <a href="{% url 'register' %}" class="inline-flex items-center gap-2 mt-8 bg-white text-brand-700 px-8 py-4 rounded-2xl font-extrabold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-[0.98]">
-                Создать аккаунт бесплатно
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            <a href="{% url 'register' %}" class="inline-flex items-center gap-2 mt-8 bg-white text-brand-700 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-extrabold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all active:scale-[0.98]">
+                Начать бесплатно
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </a>
         </div>
     </div>

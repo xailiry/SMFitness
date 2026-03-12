@@ -121,21 +121,29 @@
             pointer-events: auto;
         }
     </style>
-    <!-- Django Messages to Toast bridge -->
+    <!-- Django Messages bridge -->
+    <div id="django-messages" class="hidden" data-messages='[{% for message in messages %}{"text": "{{ message|escapejs }}", "tags": "{{ message.tags }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'></div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            {% if messages %}
-                {% for message in messages %}
-                    let type = 'info';
-                    {% if message.tags == 'success' %} type = 'success';
-                    {% elif message.tags == 'error' %} type = 'error';
-                    {% elif message.tags == 'warning' %} type = 'error';
-                    {% endif %}
-                    setTimeout(() => {
-                        showNotification("{{ message|escapejs }}", type);
-                    }, {{ forloop.counter0 }} * 500 + 100);
-                {% endfor %}
-            {% endif %}
+            const msgContainer = document.getElementById('django-messages');
+            if (msgContainer && msgContainer.dataset.messages) {
+                try {
+                    const messages = JSON.parse(msgContainer.dataset.messages);
+                    messages.forEach((m, idx) => {
+                        let type = 'info';
+                        if (m.tags.includes('success')) type = 'success';
+                        else if (m.tags.includes('error') || m.tags.includes('warning')) type = 'error';
+                        
+                        setTimeout(() => {
+                            if (typeof showNotification === 'function') {
+                                showNotification(m.text, type);
+                            }
+                        }, idx * 500 + 100);
+                    });
+                } catch (e) {
+                    console.error("Error parsing messages:", e);
+                }
+            }
         });
     </script>
 </head>
@@ -160,16 +168,16 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 sm:h-20">
                 <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'landing' %}{% endif %}"
-                    class="flex items-center gap-2.5 group">
+                    class="flex items-center gap-2 group shrink-0">
                     <div
-                        class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 group-hover:scale-110 transition-transform">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 group-hover:scale-110 transition-transform">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                 d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
                     <span
-                        class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">SMFitness</span>
+                        class="text-lg sm:text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">SMFitness</span>
                 </a>
                 <div class="flex items-center gap-1 sm:gap-2">
                     {% if user.is_authenticated %}
@@ -206,9 +214,9 @@
                     </a>
                     {% else %}
                     <a href="{% url 'login' %}"
-                        class="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 font-medium px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all">Вход</a>
+                        class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 font-medium px-2 sm:px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all">Вход</a>
                     <a href="{% url 'register' %}"
-                        class="btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white text-sm px-5 py-2 rounded-full font-bold shadow-lg shadow-brand-500/25">Регистрация</a>
+                        class="btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white text-[10px] sm:text-sm px-3 sm:px-5 py-2 rounded-full font-bold shadow-lg shadow-brand-500/25 whitespace-nowrap">Регистрация</a>
                     {% endif %}
 
                     <!-- Theme Toggle -->
@@ -314,7 +322,17 @@
                 </div>
                 <span class="font-bold text-sm text-gray-700 dark:text-gray-300">SMFitness</span>
             </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500">&copy; 2025 Индивидуальный проект — Богатов К.А.</p>
+            <div class="flex items-center gap-4">
+                <p class="text-xs text-gray-400 dark:text-gray-500">&copy; 2025 Индивидуальный проект — Богатов К.А.</p>
+                <a href="https://github.com/xailiry" target="_blank" rel="noopener noreferrer" 
+                   class="text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5 group"
+                   title="GitHub автора">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0C5.373 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.6.11.819-.26.819-.578 0-.284-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.93 0-1.31.469-2.38 1.236-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.3 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.84 1.235 1.911 1.235 3.22 0 4.609-2.807 5.624-5.479 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .32.218.694.825.576C20.565 21.796 24 17.298 24 12c0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <span class="text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">xailiry</span>
+                </a>
+            </div>
         </div>
     </footer>
 

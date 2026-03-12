@@ -176,11 +176,11 @@
                 <div>
                     <h3 class="text-xs font-bold text-indigo-100 uppercase tracking-widest mb-1 opacity-80">Ваша цель</h3>
                     {% if weight_goal_reached %}
-                    <p class="text-2xl font-black">Достигнута! 🎉</p>
-                    <span class="text-[10px] font-bold text-indigo-100/70">Удерживайте результат</span>
+                    <p class="text-3xl font-black mb-0.5">{{ target_weight }}<span class="text-lg font-bold ml-1 text-indigo-100/80">кг</span></p>
+                    <span class="text-[10px] font-bold text-indigo-100/70">Цель достигнута! 🎉</span>
                     {% else %}
-                    <p class="text-3xl font-black mb-0.5">{{ weight_diff }}<span class="text-lg font-bold ml-1 text-indigo-100/80">кг</span></p>
-                    <span class="text-[10px] font-bold text-indigo-100/70 uppercase tracking-tighter">Осталось до {{ target_weight }} кг</span>
+                    <p class="text-3xl font-black mb-0.5">{{ target_weight }}<span class="text-lg font-bold ml-1 text-indigo-100/80">кг</span></p>
+                    <span class="text-[10px] font-bold text-indigo-100/70 uppercase tracking-tighter">Осталось до цели: {{ weight_diff }} кг</span>
                     {% endif %}
                 </div>
                 <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20">
@@ -727,10 +727,24 @@
     customExSearch.addEventListener('input', () => renderCustomOptions(customExSearch.value));
     customExSearch.addEventListener('click', e => e.stopPropagation());
     
-    document.addEventListener('click', (e) => {
-        if (!customExContainer.contains(e.target)) {
+    function closeAllDropdowns() {
+        closeCustomDropdown();
+        if (chartTypeOptions) {
+            chartTypeOptions.classList.add('hidden');
+            if (chartTypeArrow) chartTypeArrow.classList.remove('rotate-180');
+        }
+    }
+
+    document.addEventListener('pointerdown', (e) => {
+        if (customExContainer && !customExContainer.contains(e.target)) {
             closeCustomDropdown();
-            document.getElementById('custom-exercise-chevron').classList.remove('rotate-180');
+            const chew = document.getElementById('custom-exercise-chevron');
+            if (chew) chew.classList.remove('rotate-180');
+        }
+        const chartTypeContainer = document.getElementById('custom-chart-type-container');
+        if (chartTypeContainer && !chartTypeContainer.contains(e.target)) {
+            if (chartTypeOptions) chartTypeOptions.classList.add('hidden');
+            if (chartTypeArrow) chartTypeArrow.classList.remove('rotate-180');
         }
     });
 
@@ -753,14 +767,20 @@
         }
     }
 
-    chartTypeTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isHidden = chartTypeOptions.classList.contains('hidden');
-        closeCustomDropdown(); // Ensure exercise dropdown is closed
-        
-        chartTypeOptions.classList.toggle('hidden');
-        chartTypeArrow.classList.toggle('rotate-180');
-    });
+    if (chartTypeTrigger) {
+        chartTypeTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isHidden = chartTypeOptions.classList.contains('hidden');
+            if (isHidden) {
+                closeCustomDropdown(); 
+                chartTypeOptions.classList.remove('hidden');
+                chartTypeArrow.classList.add('rotate-180');
+            } else {
+                chartTypeOptions.classList.add('hidden');
+                chartTypeArrow.classList.remove('rotate-180');
+            }
+        });
+    }
 
     document.querySelectorAll('.chart-type-option').forEach(option => {
         option.addEventListener('click', function() {
@@ -773,14 +793,6 @@
         });
     });
 
-    // Handle clicks outside to close
-    document.addEventListener('click', (e) => {
-        const container = document.getElementById('custom-chart-type-container');
-        if (container && !container.contains(e.target)) {
-            chartTypeOptions.classList.add('hidden');
-            chartTypeArrow.classList.remove('rotate-180');
-        }
-    });
 
     // Initial display update
     updateChartTypeDisplay();
