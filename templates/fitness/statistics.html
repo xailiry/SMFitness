@@ -1,0 +1,746 @@
+{% extends 'base.html' %}
+
+{% block title %}Аналитика - SMFitness{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Аналитика</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">Подробная статистика ваших тренировок</p>
+    </div>
+    
+    <!-- Фильтры периодов -->
+    <div class="flex bg-gray-100 dark:bg-dark-700 p-1 rounded-xl self-start sm:self-center">
+        <button onclick="changePeriod('week')" id="btn-period-week" 
+            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+            НЕДЕЛЯ
+        </button>
+        <button onclick="changePeriod('month')" id="btn-period-month" 
+            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+            МЕСЯЦ
+        </button>
+        <button onclick="changePeriod('3months')" id="btn-period-3months" 
+            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+            3 МЕСЯЦА
+        </button>
+        <button onclick="changePeriod('all')" id="btn-period-all" 
+            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-dark-600 shadow-sm text-brand-600 dark:text-brand-400">
+            ВСЁ ВРЕМЯ
+        </button>
+    </div>
+</div>
+
+{% if show_charts %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+        <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">📈 Прогресс рабочих весов</h3>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Максимальный вес по дням для выбранного упражнения</p>
+        <div class="relative w-full mb-4 group" id="custom-exercise-select-container">
+            <button type="button" id="custom-exercise-btn" class="w-full flex items-center justify-between bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm text-left">
+                <span class="flex items-center gap-3" id="custom-exercise-text">
+                    <span class="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </span>
+                    <span>-- Выберите упражнение --</span>
+                </span>
+                <div class="w-8 h-8 rounded-lg bg-white dark:bg-dark-600 flex items-center justify-center border border-gray-100 dark:border-gray-600 shadow-sm ml-2 group-hover:scale-105 transition-transform" id="custom-exercise-chevron">
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+            </button>
+            <div id="custom-exercise-dropdown" class="absolute z-50 w-full mt-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 scale-95 opacity-0">
+                <div class="p-3 border-b border-gray-50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-dark-800/80">
+                    <div class="relative relative-search">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <svg class="w-4.5 h-4.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="custom-exercise-search" class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder-gray-400" placeholder="Поиск упражнения..." autocomplete="off">
+                    </div>
+                </div>
+                <ul id="custom-exercise-list" class="max-h-64 overflow-y-auto no-scrollbar py-1">
+                    <!-- Заполняется через JS -->
+                </ul>
+            </div>
+        </div>
+        <div class="relative h-[280px]"><canvas id="weightChart"></canvas></div>
+        <div id="noWeightData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных</p></div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+        <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">📊 Объём тренировок по неделям</h3>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Суммарный объём (подходы × повторения × вес) за неделю</p>
+        <div class="relative h-[300px]"><canvas id="volumeChart"></canvas></div>
+        <div id="noVolumeData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных</p></div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+        <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">🗓️ Частота по дням недели</h3>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">В какие дни вы тренируетесь чаще всего</p>
+        <div class="relative h-[300px]"><canvas id="freqChart"></canvas></div>
+        <div id="noFreqData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных</p></div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40 relative overflow-hidden">
+        <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">🏋️ Распределение по мышечным группам</h3>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Нагрузка по группам мышц (по повторениям)</p>
+        <div class="relative h-[300px]">
+            <canvas id="muscleChart"></canvas>
+            <!-- Custom HTML Tooltip Container -->
+            <div id="muscle-tooltip" class="absolute bg-white/90 dark:bg-dark-800/90 backdrop-blur-md border border-gray-100 dark:border-gray-700 p-3 rounded-xl shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-50 min-w-[120px]"></div>
+        </div>
+        <div id="noMuscleData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных</p></div>
+    </div>
+</div>
+{% elif has_data %}
+<div class="text-center py-20 bg-white/50 dark:bg-dark-800/50 backdrop-blur-sm rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
+    <div class="w-20 h-20 mx-auto bg-brand-50 dark:bg-brand-900/30 rounded-full flex items-center justify-center text-brand-500 mb-5">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg>
+    </div>
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Нужно еще немного данных</h3>
+    <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
+        Чтобы построить качественные графики прогресса, нам нужно увидеть хотя бы <b>{{ min_workouts }}</b> тренировки. 
+        Добавьте ещё как минимум <b>{{ min_workouts|add:"-total_workouts" }}</b> для открытия этого раздела.
+    </p>
+    <a href="{% url 'add_workout' %}" class="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-transparent text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 transition shadow-lg shadow-brand-500/30">
+        Добавить тренировку
+    </a>
+</div>
+{% else %}
+<div class="text-center py-20 bg-white/50 dark:bg-dark-800/50 backdrop-blur-sm rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
+    <div class="w-20 h-20 mx-auto bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 mb-5">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+    </div>
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Статистики пока нет</h3>
+    <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">Здесь появятся красивые графики вашего прогресса после первой тренировки.</p>
+    <a href="{% url 'add_workout' %}" class="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-transparent text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 transition shadow-lg shadow-brand-500/30">
+        Добавить тренировку
+    </a>
+</div>
+{% endif %}
+
+<!-- Cardio analytics section (always shown if any cardio exists) -->
+{% if has_cardio %}
+<div class="mt-8">
+    <div class="mb-6">
+        <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+            </span>
+            Кардио-аналитика
+        </h2>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">Прогресс ваших кардио-тренировок по неделям</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+            <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">⏱️ Время кардио по неделям</h3>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Суммарное время (минуты) всех кардио-сессий</p>
+            <div class="relative h-[280px]"><canvas id="cardioMinutesChart"></canvas></div>
+        </div>
+        <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+            <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">🏃 Дистанция по неделям</h3>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Километры всех кардио-сессий за неделю</p>
+            <div class="relative h-[280px]"><canvas id="cardioKmChart"></canvas></div>
+        </div>
+    </div>
+</div>
+</div>
+{% elif has_data %}
+<div class="mt-8 border-t border-gray-100 dark:border-gray-700 pt-8 text-center pb-8">
+    <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+    </div>
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Кардио-аналитика недоступна</h3>
+    <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">Добавьте кардио-упражнения в свои тренировки, чтобы разблокировать этот раздел статистики.</p>
+</div>
+{% endif %}
+
+<script>
+const isDark = document.documentElement.classList.contains('dark');
+Chart.defaults.font.family = 'Outfit, Inter, sans-serif';
+Chart.defaults.color = isDark ? '#9ca3af' : '#64748b';
+const gridColor = isDark ? '#334155' : '#f1f5f9';
+const COLORS = [
+    '#3b82f6', // blue
+    '#10b981', // emerald
+    '#8b5cf6', // violet
+    '#f59e0b', // amber
+    '#ef4444', // red
+    '#06b6d4', // cyan
+    '#ec4899', // pink
+    '#f97316', // orange
+    '#6366f1'  // indigo
+];
+const GRADIENTS = [
+    ['#3b82f6', '#2563eb'],
+    ['#10b981', '#059669'],
+    ['#8b5cf6', '#7c3aed'],
+    ['#f59e0b', '#d97706'],
+    ['#ef4444', '#dc2626'],
+    ['#06b6d4', '#0891b2'],
+    ['#ec4899', '#db2777'],
+    ['#f97316', '#ea580c'],
+    ['#6366f1', '#4f46e5']
+];
+
+// Data from backend
+const rawSets = JSON.parse('{{ raw_sets_json|escapejs }}');
+const rawCardio = JSON.parse('{{ raw_cardio_json|escapejs }}');
+
+// Chart instances
+let charts = {
+    weight: null,
+    volume: null,
+    freq: null,
+    muscle: null,
+    cardioMinutes: null,
+    cardioKm: null
+};
+
+let currentExercise = "";
+let currentPeriod = 'all';
+
+function getWeekString(dateStr) {
+    const d = new Date(dateStr);
+    const day = d.getDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    const weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+    return `${d.getUTCFullYear()}-W${weekNo < 10 ? '0'+weekNo : weekNo}`;
+}
+
+function getReadableWeek(dateStr, weekNum) {
+    const d = new Date(dateStr);
+    const day = d.getDay() || 7;
+    const start = new Date(d);
+    start.setDate(d.getDate() - day + 1);
+    const options = { month: 'short', day: 'numeric' };
+    return `Нед ${weekNum} (${start.toLocaleDateString('ru-RU', options)})`;
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    initExerciseSelect();
+    updateCharts();
+});
+
+function initExerciseSelect() {
+    const listContainer = document.getElementById('custom-exercise-list');
+    const searchInput = document.getElementById('custom-exercise-search');
+    const btnText = document.getElementById('custom-exercise-text');
+    const btnInfo = document.getElementById('custom-exercise-btn');
+    const dropdown = document.getElementById('custom-exercise-dropdown');
+    const chevronSVG = document.querySelector('#custom-exercise-chevron svg');
+    const customContainer = document.getElementById('custom-exercise-select-container');
+    
+    if (!listContainer || !rawSets) return;
+    
+    const exercises = [...new Set(rawSets.map(s => s.e))].sort();
+    
+    function setSelectUI(exName) {
+        currentExercise = exName;
+        btnText.innerHTML = `<span class="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span><span class="font-bold text-gray-900 dark:text-white truncate">${exName}</span>`;
+    }
+
+    function renderList(filter = '') {
+        listContainer.innerHTML = '';
+        const filtered = exercises.filter(ex => ex.toLowerCase().includes(filter.toLowerCase()));
+        
+        filtered.forEach(ex => {
+            const li = document.createElement('li');
+            const isSelected = ex === currentExercise;
+            li.className = `px-4 py-3 cursor-pointer text-sm font-medium flex items-center justify-between transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-0 ${isSelected ? 'bg-brand-50 dark:bg-brand-900/20' : 'hover:bg-gray-50 dark:hover:bg-dark-700'}`;
+            li.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full ${isSelected ? 'bg-brand-500 shadow-sm shadow-brand-500/50' : 'bg-gray-200 dark:bg-gray-600 group-hover:bg-brand-300 transition-colors'}"></span>
+                    <span class="${isSelected ? 'text-brand-700 dark:text-brand-300 font-bold' : 'text-gray-700 dark:text-gray-200'}">${ex}</span>
+                </div>
+            `;
+            li.addEventListener('click', () => {
+                setSelectUI(ex);
+                closeDropdown();
+                updateCharts();
+            });
+            listContainer.appendChild(li);
+        });
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = '<li class="px-5 py-8 text-center"><div class="text-sm font-medium text-gray-500 dark:text-gray-400">Упражнения не найдены</div><p class="text-xs text-gray-400 mt-1">Попробуйте изменить запрос</p></li>';
+        }
+    }
+
+    if (exercises.length > 0) {
+        setSelectUI(exercises[0]);
+    }
+    
+    function toggleDropdown() {
+        if (dropdown.classList.contains('hidden')) {
+            dropdown.classList.remove('hidden');
+            chevronSVG.classList.add('rotate-180');
+            setTimeout(() => {
+                dropdown.classList.remove('scale-95', 'opacity-0');
+                dropdown.classList.add('scale-100', 'opacity-100');
+                searchInput.value = '';
+                renderList();
+                searchInput.focus();
+            }, 10);
+        } else {
+            closeDropdown();
+        }
+    }
+    
+    function closeDropdown() {
+        dropdown.classList.remove('scale-100', 'opacity-100');
+        dropdown.classList.add('scale-95', 'opacity-0');
+        chevronSVG.classList.remove('rotate-180');
+        setTimeout(() => {
+            dropdown.classList.add('hidden');
+        }, 200);
+    }
+    
+    btnInfo.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleDropdown();
+    });
+    
+    searchInput.addEventListener('input', (e) => {
+        renderList(e.target.value);
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!customContainer.contains(e.target)) {
+            if (!dropdown.classList.contains('hidden')) closeDropdown();
+        }
+    });
+}
+
+function changePeriod(period) {
+    currentPeriod = period;
+    
+    // Update buttons UI
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'dark:bg-dark-600', 'shadow-sm', 'text-brand-600', 'dark:text-brand-400');
+        btn.classList.add('text-gray-500', 'dark:text-gray-400');
+    });
+    const activeBtn = document.getElementById(`btn-period-${period}`);
+    activeBtn.classList.remove('text-gray-500', 'dark:text-gray-400');
+    activeBtn.classList.add('bg-white', 'dark:bg-dark-600', 'shadow-sm', 'text-brand-600', 'dark:text-brand-400');
+    
+    updateCharts();
+}
+
+function getCutoffDate() {
+    if (currentPeriod === 'all') return null;
+    const d = new Date();
+    if (currentPeriod === 'week') d.setDate(d.getDate() - 7);
+    else if (currentPeriod === 'month') d.setMonth(d.getMonth() - 1);
+    else if (currentPeriod === '3months') d.setMonth(d.getMonth() - 3);
+    return d;
+}
+
+function updateCharts() {
+    const cutoff = getCutoffDate();
+    const filteredSets = cutoff ? rawSets.filter(s => new Date(s.d) >= cutoff) : rawSets;
+    const filteredCardio = cutoff ? rawCardio.filter(c => new Date(c.d) >= cutoff) : rawCardio;
+
+    renderWeightChart(filteredSets);
+    renderVolumeChart(filteredSets);
+    renderFreqChart(filteredSets);
+    renderMuscleChart(filteredSets);
+    renderCardioCharts(filteredCardio);
+}
+
+function renderWeightChart(sets) {
+    const exName = currentExercise;
+    const chartCanvas = document.getElementById('weightChart');
+    const noDataDiv = document.getElementById('noWeightData');
+    const container = chartCanvas?.parentElement;
+    if (!chartCanvas || !noDataDiv || !container) return;
+
+    const dataPoints = sets.filter(s => s.e === exName);
+    if (dataPoints.length === 0) {
+        if (charts.weight) charts.weight.destroy();
+        noDataDiv.classList.remove('hidden');
+        container.classList.add('hidden');
+        return;
+    }
+    noDataDiv.classList.add('hidden');
+    container.classList.remove('hidden');
+
+    const ctx = chartCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Group by date, take max weight
+    const grouped = {};
+    dataPoints.forEach(p => {
+        grouped[p.d] = Math.max(grouped[p.d] || 0, p.w);
+    });
+    const sortedDates = Object.keys(grouped).sort();
+    
+    if (charts.weight) charts.weight.destroy();
+    const g = ctx.createLinearGradient(0, 0, 0, 300);
+    g.addColorStop(0, 'rgba(59,130,246,0.35)');
+    g.addColorStop(1, 'rgba(59,130,246,0)');
+    
+    charts.weight = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedDates,
+            datasets: [{
+                label: 'кг',
+                data: sortedDates.map(d => grouped[d]),
+                borderColor: '#3b82f6',
+                backgroundColor: g,
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: isDark ? '#1e293b' : '#fff'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    titleColor: isDark ? '#f8fafc' : '#1e293b',
+                    bodyColor: isDark ? '#94a3b8' : '#64748b',
+                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                    borderWidth: 1,
+                    padding: 12,
+                    boxPadding: 6,
+                    usePointStyle: true,
+                    titleFont: { size: 14, weight: 'bold', family: 'Outfit' },
+                    bodyFont: { size: 13, family: 'Outfit' }
+                }
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: false,
+                    grid: { color: gridColor, borderDash: [6, 6], drawBorder: false },
+                    ticks: { font: { family: 'Outfit', size: 11 }, padding: 10 }
+                }, 
+                x: { 
+                    grid: { display: false },
+                    ticks: { font: { family: 'Outfit', size: 11 }, padding: 10 }
+                } 
+            }
+        }
+    });
+}
+
+function renderVolumeChart(sets) {
+    const ctx = document.getElementById('volumeChart')?.getContext('2d');
+    if (!ctx) return;
+
+    // Group by week or by day if period is "week"
+    const isSmallPeriod = currentPeriod === 'week';
+    const grouped = {};
+    const weekDateMap = {};
+    sets.forEach(s => {
+        let label;
+        if (isSmallPeriod) {
+            label = s.d; // By day
+        } else {
+            // By week (ISO)
+            label = getWeekString(s.d);
+            if (!weekDateMap[label]) weekDateMap[label] = s.d;
+        }
+        grouped[label] = (grouped[label] || 0) + s.v;
+    });
+
+    const sortedLabels = Object.keys(grouped).sort();
+    const displayLabels = sortedLabels.map(l => {
+        if (isSmallPeriod) {
+            const d = new Date(l);
+            return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        }
+        const wNum = l.split('-W')[1];
+        return getReadableWeek(weekDateMap[l], parseInt(wNum));
+    });
+    if (sortedLabels.length === 0) {
+        if (charts.volume) charts.volume.destroy();
+        document.getElementById('noVolumeData').classList.remove('hidden');
+        document.getElementById('volumeChart').style.display = 'none';
+        return;
+    }
+    document.getElementById('noVolumeData').classList.add('hidden');
+    document.getElementById('volumeChart').style.display = 'block';
+
+    if (charts.volume) charts.volume.destroy();
+    charts.volume = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: displayLabels,
+            datasets: [{
+                label: 'кг',
+                data: sortedLabels.map(l => grouped[l]),
+                backgroundColor: 'rgba(16,185,129,0.6)',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    titleColor: isDark ? '#f8fafc' : '#1e293b',
+                    bodyColor: isDark ? '#94a3b8' : '#64748b',
+                    padding: 12,
+                    titleFont: { size: 14, weight: 'bold', family: 'Outfit' }
+                }
+            },
+            scales: { 
+                y: { 
+                    grid: { color: gridColor, borderDash: [6, 6], drawBorder: false },
+                    ticks: { font: { family: 'Outfit', size: 11 }, padding: 10 }
+                }, 
+                x: { 
+                    grid: { display: false },
+                    ticks: { font: { family: 'Outfit', size: 11 }, padding: 10 }
+                } 
+            }
+        }
+    });
+}
+
+function renderFreqChart(sets) {
+    const ctx = document.getElementById('freqChart')?.getContext('2d');
+    if (!ctx) return;
+    
+    const weekdayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    const uniqueDates = new Set(sets.map(s => s.d));
+    uniqueDates.forEach(d => {
+        const day = new Date(d).getDay();
+        counts[day === 0 ? 6 : day - 1]++;
+    });
+
+    if (uniqueDates.size === 0) {
+        if (charts.freq) charts.freq.destroy();
+        document.getElementById('noFreqData').classList.remove('hidden');
+        document.getElementById('freqChart').style.display = 'none';
+        return;
+    }
+    document.getElementById('noFreqData').classList.add('hidden');
+    document.getElementById('freqChart').style.display = 'block';
+
+    if (charts.freq) charts.freq.destroy();
+    charts.freq = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: weekdayLabels,
+            datasets: [{
+                data: counts,
+                fill: true,
+                backgroundColor: 'rgba(139,92,246,0.2)',
+                borderColor: '#8b5cf6',
+                pointBackgroundColor: '#8b5cf6'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { 
+                r: { 
+                    angleLines: { color: gridColor },
+                    grid: { color: gridColor },
+                    pointLabels: { font: { size: 12, weight: 'bold', family: 'Outfit' }, color: isDark ? '#e2e8f0' : '#475569' },
+                    ticks: { stepSize: 1, display: false, backdropColor: 'transparent' } 
+                } 
+            }
+        }
+    });
+}
+
+function renderMuscleChart(sets) {
+    const canvas = document.getElementById('muscleChart');
+    const ctx = canvas?.getContext('2d');
+    const tooltipEl = document.getElementById('muscle-tooltip');
+    if (!ctx) return;
+
+    const grouped = {};
+    let totalReps = 0;
+    sets.forEach(s => {
+        grouped[s.m] = (grouped[s.m] || 0) + s.r;
+        totalReps += s.r;
+    });
+    
+    const labels = Object.keys(grouped);
+    if (labels.length === 0) {
+        if (charts.muscle) charts.muscle.destroy();
+        document.getElementById('noMuscleData').classList.remove('hidden');
+        canvas.style.display = 'none';
+        return;
+    }
+    document.getElementById('noMuscleData').classList.add('hidden');
+    canvas.style.display = 'block';
+
+    const bgColors = labels.map((_, i) => {
+        const g = ctx.createLinearGradient(0, 0, 0, 400);
+        g.addColorStop(0, GRADIENTS[i % GRADIENTS.length][0]);
+        g.addColorStop(1, GRADIENTS[i % GRADIENTS.length][1]);
+        return g;
+    });
+
+    if (charts.muscle) charts.muscle.destroy();
+
+    // Center text plugin
+    const centerTextPlugin = {
+        id: 'centerText',
+        afterDraw: (chart) => {
+            if (chart.config.type !== 'doughnut') return;
+            const { ctx, chartArea: { top, left, width, height } } = chart;
+            ctx.save();
+            const centerX = left + width / 2;
+            const centerY = top + height / 2;
+            
+            const fontSize = (height / 114).toFixed(2);
+            ctx.font = `bold ${fontSize}em Outfit`;
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = isDark ? '#f8fafc' : '#1e3a8a';
+            ctx.fillText(totalReps, centerX, centerY - 5);
+            
+            ctx.font = `500 0.85em Outfit`;
+            ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+            ctx.fillText('повторов', centerX, centerY + 15);
+            ctx.restore();
+        }
+    };
+
+    charts.muscle = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: labels.map(l => grouped[l]),
+                backgroundColor: bgColors,
+                borderWidth: 0,
+                hoverOffset: 15,
+                borderRadius: 8,
+                spacing: 4
+            }]
+        },
+        plugins: [centerTextPlugin],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            layout: { padding: { left: 10, right: 30, top: 10, bottom: 10 } },
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 24,
+                        font: { size: 13, weight: '500', family: 'Outfit' },
+                        color: isDark ? '#94a3b8' : '#64748b'
+                    }
+                },
+                tooltip: {
+                    enabled: false,
+                    external: function(context) {
+                        const {chart, tooltip} = context;
+                        if (tooltip.opacity === 0) {
+                            tooltipEl.style.opacity = 0;
+                            return;
+                        }
+
+                        if (tooltip.body) {
+                            const label = tooltip.dataPoints[0].label;
+                            const value = tooltip.dataPoints[0].formattedValue;
+                            const color = tooltip.labelColors[0].backgroundColor;
+                            const percent = Math.round((tooltip.dataPoints[0].raw / totalReps) * 100);
+
+                            let innerHtml = `
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.2)]" style="background: ${color}"></div>
+                                        <span class="text-[11px] font-bold text-gray-900 dark:text-white uppercase tracking-wider">${label}</span>
+                                    </div>
+                                    <div class="flex items-baseline gap-1.5 ml-5">
+                                        <span class="text-xl font-black text-brand-600 dark:text-brand-400">${value}</span>
+                                        <span class="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase">раз</span>
+                                    </div>
+                                    <div class="ml-5 mt-1 h-1 w-full bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-brand-500 to-indigo-500" style="width: ${percent}%"></div>
+                                    </div>
+                                    <span class="ml-5 text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase">${percent}% нагрузки</span>
+                                </div>
+                            `;
+                            tooltipEl.innerHTML = innerHtml;
+                        }
+
+                        const {offsetLeft: positionX, offsetTop: positionY} = chart.canvas;
+                        tooltipEl.style.opacity = 1;
+                        tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+                        tooltipEl.style.top = positionY + tooltip.caretY - 100 + 'px';
+                    }
+                }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 1200,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+}
+
+function renderCardioCharts(cardio) {
+    const ctxMin = document.getElementById('cardioMinutesChart')?.getContext('2d');
+    const ctxKm = document.getElementById('cardioKmChart')?.getContext('2d');
+    if (!ctxMin) return;
+
+    const groupedMin = {};
+    const groupedKm = {};
+    const weekDateMap = {};
+    cardio.forEach(c => {
+        const d = new Date(c.d);
+        const jan1 = new Date(d.getFullYear(), 0, 1);
+        const w = Math.ceil((((d - jan1) / 86400000) + jan1.getDay() + 1) / 7);
+        const label = `${d.getFullYear()}-W${String(w).padStart(2, '0')}`;
+        if (!weekDateMap[label]) weekDateMap[label] = c.d;
+        groupedMin[label] = (groupedMin[label] || 0) + c.min;
+        groupedKm[label] = (groupedKm[label] || 0) + c.km;
+    });
+
+    const sortedLabels = Object.keys(groupedMin).sort();
+    const displayLabels = sortedLabels.map(l => {
+        const wNum = l.split('-W')[1];
+        return getReadableWeek(weekDateMap[l], parseInt(wNum));
+    });
+    
+    if (charts.cardioMinutes) charts.cardioMinutes.destroy();
+    if (charts.cardioKm) charts.cardioKm.destroy();
+
+    if (displayLabels.length > 0) {
+        charts.cardioMinutes = new Chart(ctxMin, {
+            type: 'bar',
+            data: {
+                labels: displayLabels,
+                datasets: [{ label: 'мин', data: sortedLabels.map(l => groupedMin[l]), backgroundColor: 'rgba(244,63,94,0.6)', borderRadius: 6 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+        charts.cardioKm = new Chart(ctxKm, {
+            type: 'bar',
+            data: {
+                labels: displayLabels,
+                datasets: [{ label: 'км', data: sortedLabels.map(l => groupedKm[l]), backgroundColor: 'rgba(251,146,60,0.6)', borderRadius: 6 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+}
+</script>
+{% endblock %}

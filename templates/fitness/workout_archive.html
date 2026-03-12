@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Архив тренировок - SMFitness{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-6 sm:mb-8">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Архив тренировок</h1>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Вся ваша история в одном месте</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 sm:w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span class="hidden xs:inline">Назад</span>
+        </a>
+    </div>
+
+    {% if archive %}
+        <div class="space-y-10 sm:space-y-12">
+            {% for entry in archive %}
+            <div class="year-section relative pl-6 sm:pl-8">
+                <!-- Year indicator in timeline -->
+                <div class="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-brand-500/50 via-gray-200 dark:via-gray-800 to-transparent"></div>
+                <div class="absolute left-[-3.5px] top-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brand-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                
+                <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-4 sm:mb-6 tracking-tight">{{ entry.year }}</h2>
+                
+                <div id="year-{{ entry.year }}" class="space-y-3 sm:space-y-4">
+                    {% for week in entry.weeks %}
+                    <div class="week-card group">
+                        <button onclick="loadWeek('{{ entry.year }}', '{{ week.number }}', this)" 
+                                class="w-full text-left bg-white/60 dark:bg-dark-800/60 backdrop-blur-md p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-white/60 dark:border-gray-700/40 hover:border-brand-200 dark:hover:border-brand-800 transition-all shadow-sm hover:shadow-md relative overflow-hidden">
+                            <div class="flex items-center justify-between relative z-10">
+                                <div class="flex items-center gap-3 sm:gap-4">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-50 dark:bg-brand-900/30 flex flex-col items-center justify-center text-brand-600 dark:text-brand-400 group-hover:scale-105 transition-transform">
+                                        <span class="text-[8px] sm:text-[10px] uppercase font-black leading-none">Нед</span>
+                                        <span class="text-lg sm:text-xl font-black leading-none mt-0.5 sm:mt-1">{{ week.number }}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm sm:text-base font-black text-gray-800 dark:text-gray-100 leading-tight">Показать тренировки</h4>
+                                        <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">Найдено: <b>{{ week.count }}</b> зав. тренировок</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-50/50 dark:bg-dark-900/50 flex items-center justify-center text-gray-400 group-hover:text-brand-500 group-hover:bg-brand-50 dark:group-hover:bg-brand-900/40 transition-all">
+                                        <svg class="w-4 h-4 sm:w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Background decoration -->
+                            <div class="absolute -right-4 -bottom-4 w-20 h-20 sm:w-24 sm:h-24 bg-brand-500/5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
+                        </button>
+                        
+                        <div id="workouts-{{ entry.year }}-{{ week.number }}" class="hidden mt-3 sm:mt-4 space-y-2 sm:space-y-3 pl-3 sm:pl-16 relative">
+                            <!-- Timeline connector for inner list -->
+                            <div class="absolute left-5 sm:left-[54px] top-0 bottom-0 w-0.5 bg-gray-100 dark:bg-gray-800/50"></div>
+                            
+                            <!-- Workouts loading UI -->
+                             <div class="flex justify-center p-6 sm:p-8 loading-spinner">
+                                <div class="flex gap-1">
+                                    <div class="w-1 h-4 sm:w-1.5 sm:h-6 bg-brand-500/40 rounded-full animate-bounce"></div>
+                                    <div class="w-1 h-4 sm:w-1.5 sm:h-6 bg-brand-500/70 rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                                    <div class="w-1 h-4 sm:w-1.5 sm:h-6 bg-brand-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-white/40 dark:bg-dark-800/40 backdrop-blur-sm rounded-3xl p-12 border border-dashed border-gray-300 dark:border-gray-700 text-center">
+            <div class="w-20 h-20 bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Архив пуст</h3>
+            <p class="text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-8">Вы еще не сохранили ни одной тренировки. Начните прямо сегодня!</p>
+            <a href="{% url 'add_workout' %}" class="inline-flex items-center gap-2 bg-brand-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-brand-500/20 hover:scale-105 transition-all">
+                Добавить первую тренировку
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleYear(year) {
+    const el = document.getElementById(`year-${year}`);
+    el.classList.toggle('hidden');
+}
+
+async function loadWeek(year, week, btn) {
+    const container = document.getElementById(`workouts-${year}-${week}`);
+    const svg = btn.querySelector('svg');
+    
+    // Toggle view if already loaded
+    if (!container.classList.contains('hidden')) {
+        container.classList.add('hidden');
+        svg.style.transform = 'rotate(0deg)';
+        return;
+    }
+    
+    // Show container and loading
+    container.classList.remove('hidden');
+    svg.style.transform = 'rotate(180deg)';
+    
+    // Check if already fetched
+    if (container.dataset.loaded === 'true') return;
+    
+    try {
+        const response = await fetch(`/api/archive/${year}/${week}/`);
+        const data = await response.json();
+        
+        container.innerHTML = '';
+        
+        if (data.workouts.length === 0) {
+            container.innerHTML = '<p class="text-xs text-gray-500 p-2 italic">Нет данных за эту неделю</p>';
+        } else {
+            data.workouts.forEach(w => {
+                const card = `
+                    <a href="${w.url}" class="block group/item">
+                        <div class="bg-white/50 dark:bg-dark-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800 transition-all group-hover/item:border-brand-200 dark:group-hover/item:border-brand-900 group-hover/item:shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-100">${w.date_formatted}</p>
+                                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        ${w.sets_count} упр. ${w.has_cardio ? '+ кардио' : ''}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs font-bold text-brand-600 dark:text-brand-400">${Math.round(w.total_volume)} кг</p>
+                                    <p class="text-[10px] text-gray-400">${w.total_cardio_min} мин</p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                `;
+                container.insertAdjacentHTML('beforeend', card);
+            });
+        }
+        
+        container.dataset.loaded = 'true';
+    } catch (error) {
+        console.error('Error loading workouts:', error);
+        container.innerHTML = '<p class="text-xs text-red-500 p-2 italic">Ошибка загрузки</p>';
+    }
+}
+</script>
+
+<style>
+.week-card button svg {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+{% endblock %}

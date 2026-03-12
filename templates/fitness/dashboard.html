@@ -1,0 +1,1030 @@
+{% extends 'base.html' %}
+
+{% block title %}Журнал тренировок - SMFitness{% endblock %}
+
+{% block content %}
+<!-- Stats Cards Row -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="tour-stats"
+    data-intro="Здесь отображается ваша общая статистика тренировок, объём, серия и рекорды." data-step="1">
+    <div
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+        <div class="flex items-center gap-3 mb-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                    </path>
+                </svg>
+            </div>
+        </div>
+        <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ total_workouts }}</p>
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Всего тренировок</p>
+    </div>
+    <div
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+        <div class="flex items-center gap-3 mb-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+            </div>
+        </div>
+        <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ total_volume_tons }} т</p>
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Общий объём</p>
+    </div>
+    <div
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+        <div class="flex items-center gap-3 mb-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
+                </svg>
+            </div>
+        </div>
+        <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ streak }} нед.</p>
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Серия тренировок</p>
+    </div>
+    <div
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+        <div class="flex items-center gap-3 mb-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                    </path>
+                </svg>
+            </div>
+        </div>
+        {% if best_lift %}
+        <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ best_lift.weight }} кг</p>
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5 truncate"
+            title="{{ best_lift.exercise }}">Рекорд: {{ best_lift.exercise }}</p>
+        {% else %}
+        <p class="text-2xl font-extrabold text-gray-900 dark:text-white">—</p>
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Лучший результат</p>
+        {% endif %}
+    </div>
+</div>
+
+
+{% if insights %}
+<div id="insights-section" class="mb-8 animate-slide-up-delay">
+    <div class="flex items-center gap-2 mb-4">
+        <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Инсайты недели</h3>
+    </div>
+    <div id="insights-carousel" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scroll-smooth">
+        {% for insight in insights %}
+        <div class="flex-none w-[280px] sm:w-[320px] snap-center bg-white/60 dark:bg-dark-800/60 backdrop-blur-md rounded-2xl p-5 border border-brand-100/30 dark:border-brand-900/40 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-brand-500/5 rounded-full group-hover:scale-120 transition-transform"></div>
+            <div class="flex gap-4 relative z-10">
+                <div class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                    {{ insight.icon }}
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 leading-snug">{{ insight.text }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const carousel = document.getElementById("insights-carousel");
+        if (!carousel) return;
+        
+        let slideTimer;
+        // Check if there's enough content to scroll
+        if (carousel.scrollWidth <= carousel.clientWidth) return;
+
+        function autoScroll() {
+            // If near the end, scroll back to 0. Otherwise, scroll one card width roughly
+            if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10) {
+                carousel.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                carousel.scrollBy({ left: 320, behavior: 'smooth' });
+            }
+        }
+
+        // Start auto-scrolling every 3.5 seconds
+        slideTimer = setInterval(autoScroll, 3500);
+
+        // Horizontal scroll with mouse wheel
+        carousel.addEventListener('wheel', (e) => {
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                e.preventDefault();
+                carousel.scrollBy({ left: e.deltaY < 0 ? -320 : 320, behavior: 'smooth' });
+            }
+        }, { passive: false });
+
+        // Pause on hover or touch
+        carousel.addEventListener('mouseenter', () => clearInterval(slideTimer));
+        carousel.addEventListener('touchstart', () => clearInterval(slideTimer));
+        carousel.addEventListener('mouseleave', () => {
+            slideTimer = setInterval(autoScroll, 3500);
+        });
+        carousel.addEventListener('touchend', () => {
+             // Restart slightly delayed after touch
+             setTimeout(() => {
+                 clearInterval(slideTimer); // Clear just in case
+                 slideTimer = setInterval(autoScroll, 3500);
+             }, 2000);
+        });
+    });
+</script>
+{% else %}
+<div id="insights-section" class="mb-8 animate-slide-up-delay">
+    <div class="flex items-center gap-2 mb-4">
+        <div class="w-1.5 h-6 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest opacity-50">Инсайты недели</h3>
+    </div>
+    <div class="bg-white/40 dark:bg-dark-800/40 backdrop-blur-sm rounded-2xl p-8 border border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center text-center">
+        <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-gray-400 mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </div>
+        <p class="text-sm font-bold text-gray-400 dark:text-gray-500">Здесь будут ваши персональные инсайты от ИИ</p>
+        <p class="text-[11px] text-gray-400/70 mt-1">Проведите пару тренировок, чтобы магия началась ✨</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+    <!-- Sidebar Widgets (Right on Desktop, Top on Mobile) -->
+    <div class="space-y-6 order-1 xl:order-2">
+        <!-- Weight Goal Card -->
+        {% if weight_diff is not None %}
+        <div id="tour-weight-goal" 
+             class="bg-gradient-to-br from-indigo-600 to-violet-700 p-5 rounded-2xl shadow-xl text-white border border-indigo-400/30 relative overflow-hidden group">
+            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
+            <div class="relative z-10 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xs font-bold text-indigo-100 uppercase tracking-widest mb-1 opacity-80">Ваша цель</h3>
+                    {% if weight_goal_reached %}
+                    <p class="text-2xl font-black">Достигнута! 🎉</p>
+                    <span class="text-[10px] font-bold text-indigo-100/70">Удерживайте результат</span>
+                    {% else %}
+                    <p class="text-3xl font-black mb-0.5">{{ weight_diff }}<span class="text-lg font-bold ml-1 text-indigo-100/80">кг</span></p>
+                    <span class="text-[10px] font-bold text-indigo-100/70 uppercase tracking-tighter">Осталось до {{ target_weight }} кг</span>
+                    {% endif %}
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+            </div>
+            {% if not weight_goal_reached and weight_progress_pct %}
+            <div class="mt-4 relative h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
+                <div class="absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-1000" style="width: {{ weight_progress_pct }}%"></div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- BMI Box -->
+        <div id="tour-bmi" data-intro="Здесь будет рассчитан ваш Индекс массы тела на основе данных из профиля."
+            data-step="3"
+            class="relative overflow-hidden p-6 rounded-2xl shadow-xl text-white border transition-all duration-500"
+            style="{% if bmi_hue is not None %}background: linear-gradient(135deg, hsl({{ bmi_hue }}, 60%, 42%), hsl({{ bmi_hue }}, 75%, 30%)); border-color: hsla({{ bmi_hue }}, 60%, 50%, 0.4);{% else %}background: linear-gradient(135deg, #059669, #065f46); border-color: rgba(16,185,129,0.5);{% endif %}">
+            <div
+                class="absolute -top-10 -right-10 w-28 h-28 rounded-full mix-blend-screen opacity-10 blur-xl"
+                style="{% if bmi_hue is not None %}background-color: hsl({{ bmi_hue }}, 65%, 65%);{% else %}background-color: #34d399;{% endif %}">
+            </div>
+            <div
+                class="absolute -bottom-10 -left-10 w-28 h-28 rounded-full mix-blend-screen opacity-10 blur-xl"
+                style="{% if bmi_hue is not None %}background-color: hsl({{ bmi_hue }}, 75%, 60%);{% else %}background-color: #2dd4bf;{% endif %}">
+            </div>
+            <div class="relative z-10 flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-emerald-100 uppercase tracking-wider mb-1">Ваш ИМТ</h3>
+                    {% if bmi %}
+                    <p class="text-4xl font-black mt-1">{{ bmi }}</p>
+                    {% else %}
+                    <p class="text-base font-bold text-emerald-100/90 mt-2">Заполните данные профиля</p>
+                    {% endif %}
+                </div>
+                <div
+                    class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cardio Summary Card -->
+        <div class="bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400 p-5 rounded-2xl shadow-xl text-white border border-rose-400/50 relative overflow-hidden">
+            <div class="absolute -top-8 -right-8 w-24 h-24 bg-rose-300 rounded-full mix-blend-screen opacity-20 blur-xl"></div>
+            <div class="relative z-10 flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-rose-100 uppercase tracking-wider mb-1">Кардио всего</h3>
+                    {% if total_cardio_minutes %}
+                    <p class="text-3xl font-black mb-1">{{ total_cardio_minutes }}<span class="text-lg font-bold ml-1 text-rose-100/80">мин</span></p>
+                    <span class="inline-block px-2.5 py-1 bg-white/20 rounded-lg text-xs font-bold border border-white/30 backdrop-blur-sm">{{ total_cardio_km }} км пройдено</span>
+                    {% else %}
+                    <p class="text-sm font-bold text-rose-100/90 mt-2">Добавь первое кардио! ❤️</p>
+                    {% endif %}
+                </div>
+                <div class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quote -->
+        <div
+            class="bg-indigo-50/80 dark:bg-indigo-900/20 backdrop-blur-xl p-5 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-800/40 relative">
+            <svg class="w-6 h-6 text-indigo-400/30 dark:text-indigo-400/20 absolute top-3 left-3" fill="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                    d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z">
+                </path>
+            </svg>
+            <div class="px-3 pt-3 flex flex-col justify-center min-h-[80px]">
+                <p class="text-sm font-medium text-indigo-900/80 dark:text-indigo-200/80 italic text-center leading-relaxed">«{{ daily_quote.text }}»</p>
+                <div class="text-right mt-2"><span class="text-xs font-bold text-indigo-500/80 dark:text-indigo-400/70">— {{ daily_quote.author }}</span></div>
+            </div>
+        </div>
+
+        <!-- Multi-Chart Card -->
+        <div id="tour-chart" data-intro="График прогресса рабочих весов. Выберите упражнение, чтобы увидеть свой рост!"
+            data-step="4"
+            class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+            {% if show_charts %}
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-extrabold text-gray-900 dark:text-white" id="dashboard-chart-title">Прогресс весов</h3>
+                <a href="{% url 'statistics' %}"
+                    class="text-xs text-brand-600 dark:text-brand-400 font-bold hover:text-brand-800 dark:hover:text-brand-300 transition-colors">Все графики →</a>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                <!-- Тип графика -->
+                <div class="w-full sm:w-1/2 relative group" id="custom-chart-type-container">
+                    <button type="button" id="chart-type-trigger" class="w-full h-full min-h-[46px] flex items-center justify-between bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl px-4 py-2 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition shadow-sm text-left">
+                        <span class="flex items-center gap-2 truncate" id="selected-chart-type-text">
+                             <!-- Сюда вставится выбранный тип -->
+                             Загрузка...
+                        </span>
+                        <div class="w-6 h-6 shrink-0 rounded-md bg-white dark:bg-dark-600 flex items-center justify-center border border-gray-100 dark:border-gray-600 shadow-sm ml-2 group-hover:scale-105 transition-transform" id="chart-type-arrow">
+                            <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+
+                    <!-- Выпадающее меню типов графиков -->
+                    <div id="chart-type-options" class="hidden absolute z-50 w-full mt-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden animate-slide-up-sm">
+                        <div class="p-1.5 space-y-0.5">
+                            <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="weight" data-icon="📈">
+                                <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">📈</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Прогресс весов</span>
+                            </div>
+                            <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="volume" data-icon="🏗️">
+                                <span class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">🏗️</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Объем тренировок</span>
+                            </div>
+                            <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="freq" data-icon="📅">
+                                <span class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">📅</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Частота тренировок</span>
+                            </div>
+                            <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="muscle" data-icon="🏋️‍♂️">
+                                <span class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">🏋️‍♂️</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Нагрузка по мышцам</span>
+                            </div>
+                            <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="cardio_min" data-icon="⏱️">
+                                <span class="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">⏱️</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Кардио (Минуты)</span>
+                            </div>
+                            <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="cardio_km" data-icon="🏃">
+                                <span class="w-7 h-7 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">🏃</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Кардио (Дистанция)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Оригинальный скрытый селект для совместимости -->
+                    <select id="chartTypeSelect" class="hidden">
+                        <option value="weight"></option>
+                        <option value="volume"></option>
+                        <option value="freq"></option>
+                        <option value="muscle"></option>
+                        <option value="cardio_min"></option>
+                        <option value="cardio_km"></option>
+                    </select>
+                </div>
+                
+                <!-- Кастомный селект упражнения (виден только для веса) -->
+                <div class="w-full sm:w-1/2 relative group" id="custom-exercise-select-container">
+                    <button type="button" id="custom-exercise-btn" class="w-full h-full min-h-[46px] flex items-center justify-between bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm text-left">
+                        <span class="flex items-center gap-2 truncate" id="custom-exercise-text">
+                            <span class="w-5 h-5 shrink-0 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </span>
+                            <span class="text-sm">-- Упражнение --</span>
+                        </span>
+                        <div class="w-6 h-6 shrink-0 rounded-md bg-white dark:bg-dark-600 flex items-center justify-center border border-gray-100 dark:border-gray-600 shadow-sm ml-2 group-hover:scale-105 transition-transform" id="custom-exercise-chevron">
+                            <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+                    <div id="custom-exercise-dropdown" class="absolute z-50 w-full mt-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 scale-95 opacity-0">
+                        <div class="p-2 border-b border-gray-50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-dark-800/80">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                                <input type="text" id="custom-exercise-search" class="w-full pl-9 pr-3 py-2 bg-white dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder-gray-400" placeholder="Поиск упражнения..." autocomplete="off">
+                            </div>
+                        </div>
+                        <ul id="custom-exercise-list" class="max-h-56 overflow-y-auto no-scrollbar py-1">
+                            <!-- Заполняется через JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative h-[220px] w-full"><canvas id="progressChart"></canvas></div>
+            <div id="noDataMsg" class="hidden flex items-center justify-center h-[180px] text-center">
+                <p class="text-xs text-gray-400 dark:text-gray-500">Добавьте тренировки для данного графика</p>
+            </div>
+            {% else %}
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-extrabold text-gray-900 dark:text-white">Аналитика прогресса</h3>
+            </div>
+            <div class="flex flex-col items-center justify-center h-[200px] text-center space-y-3 px-4">
+                <div class="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-500 mb-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <p class="text-sm font-bold text-gray-800 dark:text-gray-200">Нужно еще немного данных</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-[240px]">
+                    Добавьте ещё как минимум <b>{{ min_workouts|add:"-total_workouts" }}</b> тренировки, чтобы мы начали строить графики прогресса 🚀
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Content (Workouts) -->
+    <div class="xl:col-span-2 space-y-5 order-2 xl:order-1">
+        <div class="flex justify-between items-end mb-2">
+            <div>
+                <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Последние тренировки
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Ваш тренировочный журнал</p>
+            </div>
+            <a id="tour-add"
+                data-intro="Здесь вы можете добавить новую тренировку. Попробуйте нажать после окончания обучения!"
+                data-step="2" href="{% url 'add_workout' %}"
+                class="flex items-center gap-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-md shadow-brand-500/20 hover:shadow-lg transition-all active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Добавить
+            </a>
+        </div>
+
+        {% if workouts %}
+        {% for workout in workouts %}
+        <a href="{% url 'workout_detail' workout.pk %}" class="block group">
+            <div
+                class="bg-white/70 dark:bg-dark-800/70 backdrop-blur-md p-5 sm:p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all relative overflow-hidden">
+                <div
+                    class="absolute inset-y-0 left-0 w-1 bg-brand-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="font-bold text-gray-800 dark:text-gray-100">{{ workout.date|date:"d E Y" }}</span>
+                            <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{% if workout.sets.count %}{{ workout.sets.count }} упр.{% endif %}{% if workout.cardio_entries.count %}{% if workout.sets.count %} + {% endif %}кардио{% endif %}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-700 px-2.5 py-1 rounded-lg">
+                            {% if workout.total_volume > 0 %}
+                                {{ workout.total_volume|floatformat:0 }} кг
+                            {% elif workout.total_cardio_minutes > 0 %}
+                                Кардио ({{ workout.total_cardio_minutes }} мин)
+                            {% else %}
+                                Пустая
+                            {% endif %}
+                        </span>
+                        <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-brand-500 transition-colors"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                {% if workout.notes %}
+                <p class="text-xs text-gray-500 dark:text-gray-400 italic mb-3 pl-12">"{{ workout.notes|truncatewords:15 }}"</p>
+                {% endif %}
+                <div class="space-y-2 pl-12">
+                    {% for set in workout.sets.all %}
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 rounded-full bg-brand-400"></div>
+                            <span class="font-medium text-gray-700 dark:text-gray-300">{{ set.exercise.name }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="font-bold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-dark-700 px-2 py-0.5 rounded text-xs">{{ set.sets }}×{{ set.reps }}</span>
+                            {% if set.is_bodyweight %}
+                            <span class="font-bold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded text-xs border border-brand-100 dark:border-brand-800">Без веса</span>
+                            {% else %}
+                            <span
+                                class="font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded text-xs border border-indigo-100 dark:border-indigo-800">{{ set.weight|default:"0" }} кг</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% for cardio in workout.cardio_entries.all %}
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 rounded-full bg-rose-400"></div>
+                            <span class="font-medium text-gray-700 dark:text-gray-300">{{ cardio.get_activity_display }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2 py-0.5 rounded text-xs">{{ cardio.duration_minutes }} мин</span>
+                            {% if cardio.distance_km %}
+                            <span class="font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded text-xs border border-orange-100 dark:border-orange-800/30">{{ cardio.distance_km }} км</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        
+        <div class="pt-2">
+            <a href="{% url 'workout_archive' %}" class="flex items-center justify-center gap-2 w-full py-4 bg-gray-50/50 dark:bg-dark-800/30 hover:bg-white dark:hover:bg-dark-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 font-bold transition-all group">
+                Посмотреть все тренировки
+                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </a>
+        </div>
+
+        {% else %}
+        <div
+            class="text-center py-12 bg-white/50 dark:bg-dark-800/50 backdrop-blur-sm rounded-2xl border border-dashed border-gray-300 dark:border-gray-600">
+            <div
+                class="w-16 h-16 mx-auto bg-brand-50 dark:bg-brand-900/30 rounded-full flex items-center justify-center text-brand-500 dark:text-brand-400 mb-3">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                    </path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Пустота — это начало</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">Каждое путешествие начинается с первого шага.</p>
+            <a href="{% url 'add_workout' %}"
+                class="inline-flex items-center gap-1.5 text-white bg-brand-600 px-5 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all">Добавить
+                тренировку</a>
+        </div>
+        {% endif %}
+    </div>
+
+    </div>
+</div>
+
+<script>
+    // Check intro js
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if show_tutorial %}
+        setTimeout(() => {
+            introJs().setOptions({
+                nextLabel: 'Далее',
+                prevLabel: 'Назад',
+                doneLabel: 'Поехали!',
+                showBullets: false,
+                showProgress: true,
+                steps: [
+                    {
+                        element: '#tour-stats',
+                        intro: "Здесь ваша общая статистика. Следите за ростом рабочих весов и объема!"
+                    },
+                    {
+                        element: '#tour-weight-goal',
+                        intro: "Ваша цель веса теперь здесь. Компактно и наглядно. Мы показываем, сколько килограмм осталось до мечты!"
+                    },
+                    {
+                        element: '#nav-ai-button',
+                        intro: "Здесь живут ваши персональные советы от ИИ. Накапливайте тренировки, чтобы разблокировать глубокую аналитику!"
+                    },
+                    {
+                        element: '#insights-section',
+                        intro: "А здесь будут отображаться быстрые инсайты от ИИ. Листайте карточки, чтобы увидеть прогресс по весу, стажу и рекордам!"
+                    },
+                    {
+                        element: '#tour-add',
+                        intro: "Готовы к тренировке? Нажмите сюда, чтобы записать свои первые рекорды."
+                    },
+                    {
+                        element: '#tour-bmi',
+                        intro: "Ваш ИМТ рассчитывается автоматически. Цвет карточки меняется в зависимости от здоровья."
+                    },
+                    {
+                        element: '#tour-chart',
+                        intro: "Самое интересное! Графики прогресса. Теперь вы можете переключать типы данных и выбирать упражнения для анализа."
+                    }
+                ]
+            }).start();
+        }, 800);
+        {% endif %}
+    });
+
+
+    const rawSetsJson = '{{ raw_sets_json|escapejs }}';
+    const rawCardioJson = '{{ raw_cardio_json|escapejs }}';
+    
+    let ALL_SETS = [];
+    let ALL_CARDIO = [];
+    try {
+        if (rawSetsJson && rawSetsJson !== '""') ALL_SETS = JSON.parse(rawSetsJson);
+        if (rawCardioJson && rawCardioJson !== '""') ALL_CARDIO = JSON.parse(rawCardioJson);
+    } catch(e) {
+        console.error("Ошибка парсинга JSON", e);
+    }
+    
+    // Grouping constants
+    const EXERCISES_MAP = {};
+    const GROUP_LABELS = {
+        'chest': 'Грудь',
+        'back': 'Спина',
+        'legs': 'Ноги',
+        'shoulders': 'Плечи',
+        'arms': 'Руки',
+        'core': 'Пресс',
+        'other': 'Другое'
+    };
+    
+    // Extract unique exercises from data
+    const uniqueExercisesMap = new Map(); // e => group
+    ALL_SETS.forEach(s => {
+        if (!uniqueExercisesMap.has(s.e)) {
+            uniqueExercisesMap.set(s.e, s.m || 'other');
+            EXERCISES_MAP[s.e] = s.m || 'other';
+        }
+    });
+    
+    const exercisesList = Array.from(uniqueExercisesMap.entries()).map(([e, g]) => ({ text: e, value: e, group: g }));
+    exercisesList.sort((a,b) => a.text.localeCompare(b.text));
+
+    const isDark = document.documentElement.classList.contains('dark');
+    Chart.defaults.font.family = 'Inter, sans-serif'; 
+    Chart.defaults.color = isDark ? '#9ca3af' : '#6b7280';
+    
+    let chartInstance = null;
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const chartTitleElement = document.getElementById('dashboard-chart-title');
+    const noDataMsg = document.getElementById('noDataMsg');
+    const chartCanvas = document.getElementById('progressChart');
+    
+    // UI Elements
+    const chartTypeSelect = document.getElementById('chartTypeSelect');
+    
+    // Custom Select Elements
+    const customExContainer = document.getElementById('custom-exercise-select-container');
+    const customExBtn = document.getElementById('custom-exercise-btn');
+    const customExText = document.getElementById('custom-exercise-text');
+    const customExDropdown = document.getElementById('custom-exercise-dropdown');
+    const customExSearch = document.getElementById('custom-exercise-search');
+    const customExList = document.getElementById('custom-exercise-list');
+    
+    // State
+    let currentChartType = localStorage.getItem('smfitness_dash_chart_type') || 'weight';
+    let currentExercise = localStorage.getItem('smfitness_dash_exercise') || '';
+    
+    // If we have exercises but no current valid one, pick the most frequent one
+    if (exercisesList.length > 0) {
+        if (!currentExercise || !exercisesList.find(ex => ex.value === currentExercise)) {
+            // Find most frequent exercise
+            const counts = {};
+            ALL_SETS.forEach(s => counts[s.e] = (counts[s.e]||0) + 1);
+            let topEx = exercisesList[0].value;
+            let maxCount = 0;
+            for (const [k, v] of Object.entries(counts)) {
+                if (v > maxCount) { maxCount = v; topEx = k; }
+            }
+            currentExercise = topEx;
+        }
+    }
+    
+    // Check if cardio exists when cardio chart selected, if not fallback
+    if ((currentChartType === 'cardio_min' || currentChartType === 'cardio_km') && ALL_CARDIO.length === 0) {
+        currentChartType = 'weight';
+    }
+    chartTypeSelect.value = currentChartType;
+    
+    // === CUSTOM SELECT LOGIC ===
+    function setCustomExerciseLabel(text) {
+        customExText.innerHTML = `
+            <span class="w-5 h-5 shrink-0 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </span>
+            <span class="text-sm font-bold truncate">${text}</span>
+        `;
+    }
+
+    function renderCustomOptions(filter = '') {
+        customExList.innerHTML = '';
+        const q = filter.toLowerCase();
+        
+        const filtered = exercisesList.filter(e => {
+            const groupLabel = GROUP_LABELS[e.group] || e.group;
+            return e.text.toLowerCase().includes(q) || groupLabel.toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+            customExList.innerHTML = '<li class="px-4 py-3 text-center text-xs text-gray-500">Ничего не найдено</li>';
+            return;
+        }
+
+        const grouped = {};
+        filtered.forEach(ex => {
+            if (!grouped[ex.group]) grouped[ex.group] = [];
+            grouped[ex.group].push(ex);
+        });
+
+        const groupOrder = Object.keys(GROUP_LABELS);
+        groupOrder.forEach(gKey => {
+            if (grouped[gKey]) {
+                const groupLabel = GROUP_LABELS[gKey];
+                const header = document.createElement('li');
+                header.className = 'px-3 py-1 mt-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest bg-gray-50 dark:bg-dark-800/50 sticky top-0 backdrop-blur-sm z-10';
+                header.textContent = groupLabel;
+                customExList.appendChild(header);
+
+                grouped[gKey].forEach(ex => {
+                    const li = document.createElement('li');
+                    const isSelected = ex.value === currentExercise;
+                    li.className = `px-3 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between ${isSelected ? 'bg-brand-50/50 dark:bg-brand-900/10 text-brand-700 dark:text-brand-300 font-semibold' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700'}`;
+                    li.innerHTML = `
+                        <span class="truncate">${ex.text}</span>
+                        ${isSelected ? '<svg class="w-4 h-4 text-brand-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                    `;
+                    li.addEventListener('click', () => {
+                        currentExercise = ex.value;
+                        setCustomExerciseLabel(ex.text);
+                        closeCustomDropdown();
+                        updateChart();
+                    });
+                    customExList.appendChild(li);
+                });
+            }
+        });
+    }
+
+    function openCustomDropdown() {
+        customExDropdown.classList.remove('hidden');
+        // trigger reflow
+        void customExDropdown.offsetWidth;
+        customExDropdown.classList.remove('scale-95', 'opacity-0');
+        renderCustomOptions();
+        setTimeout(() => customExSearch.focus(), 50);
+    }
+
+    function closeCustomDropdown() {
+        customExDropdown.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            customExDropdown.classList.add('hidden');
+        }, 200); // match transition duration
+    }
+
+    customExBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (customExDropdown.classList.contains('hidden')) {
+            openCustomDropdown();
+            document.getElementById('custom-exercise-chevron').classList.add('rotate-180');
+        } else {
+            closeCustomDropdown();
+            document.getElementById('custom-exercise-chevron').classList.remove('rotate-180');
+        }
+    });
+
+    customExSearch.addEventListener('input', () => renderCustomOptions(customExSearch.value));
+    customExSearch.addEventListener('click', e => e.stopPropagation());
+    
+    document.addEventListener('click', (e) => {
+        if (!customExContainer.contains(e.target)) {
+            closeCustomDropdown();
+            document.getElementById('custom-exercise-chevron').classList.remove('rotate-180');
+        }
+    });
+
+    // === CUSTOM CHART TYPE SELECT LOGIC ===
+    const chartTypeTrigger = document.getElementById('chart-type-trigger');
+    const chartTypeOptions = document.getElementById('chart-type-options');
+    const chartTypeArrow = document.getElementById('chart-type-arrow');
+    const selectedChartTypeText = document.getElementById('selected-chart-type-text');
+
+    function updateChartTypeDisplay() {
+        const option = document.querySelector(`.chart-type-option[data-value="${currentChartType}"]`);
+        if (option) {
+            const icon = option.getAttribute('data-icon');
+            const text = option.querySelector('span:last-child').textContent;
+            selectedChartTypeText.innerHTML = `<span class="text-lg">${icon}</span> <span class="text-sm font-bold">${text}</span>`;
+            
+            // Highlight active
+            document.querySelectorAll('.chart-type-option').forEach(opt => opt.classList.remove('bg-brand-50', 'dark:bg-brand-900/40', 'ring-1', 'ring-brand-500/30'));
+            option.classList.add('bg-brand-50', 'dark:bg-brand-900/40', 'ring-1', 'ring-brand-500/30');
+        }
+    }
+
+    chartTypeTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = chartTypeOptions.classList.contains('hidden');
+        closeCustomDropdown(); // Ensure exercise dropdown is closed
+        
+        chartTypeOptions.classList.toggle('hidden');
+        chartTypeArrow.classList.toggle('rotate-180');
+    });
+
+    document.querySelectorAll('.chart-type-option').forEach(option => {
+        option.addEventListener('click', function() {
+            currentChartType = this.getAttribute('data-value');
+            chartTypeSelect.value = currentChartType;
+            updateChartTypeDisplay();
+            chartTypeOptions.classList.add('hidden');
+            chartTypeArrow.classList.remove('rotate-180');
+            updateChart();
+        });
+    });
+
+    // Handle clicks outside to close
+    document.addEventListener('click', (e) => {
+        const container = document.getElementById('custom-chart-type-container');
+        if (container && !container.contains(e.target)) {
+            chartTypeOptions.classList.add('hidden');
+            chartTypeArrow.classList.remove('rotate-180');
+        }
+    });
+
+    // Initial display update
+    updateChartTypeDisplay();
+    
+    function getWeekString(dateStr) {
+        const d = new Date(dateStr);
+        // adjust to monday
+        const day = d.getDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - day);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        const weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+        return `${d.getUTCFullYear()}-W${weekNo < 10 ? '0'+weekNo : weekNo}`;
+    }
+
+    function formatNumber(num) {
+        return Math.round(num * 10) / 10;
+    }
+
+    function formatWeekReadable(isoWk, refDateStr) {
+        if (!refDateStr || !isoWk) return isoWk;
+        const d = new Date(refDateStr);
+        const day = d.getDay() || 7;
+        const start = new Date(d);
+        start.setDate(d.getDate() - day + 1);
+        const options = { month: 'short', day: 'numeric' };
+        const weekNum = isoWk.split('-W')[1] || '';
+        return `Нед ${parseInt(weekNum)} (${start.toLocaleDateString('ru-RU', options)})`;
+    }
+    
+    function drawChart(labels, labelArr, dataArr, config) {
+        if (chartInstance) chartInstance.destroy();
+        
+        if (labels.length === 0) {
+            noDataMsg.classList.remove('hidden');
+            chartCanvas.style.display = 'none';
+            return;
+        }
+        noDataMsg.classList.add('hidden');
+        chartCanvas.style.display = 'block';
+
+        const chartConfig = {
+            type: config.type || 'bar',
+            data: {
+                labels: labels,
+                datasets: dataArr.map((data, i) => ({
+                    label: labelArr[i],
+                    data: data,
+                    backgroundColor: config.colors[i].bg,
+                    borderColor: config.colors[i].border,
+                    borderWidth: config.borderWidth || 2,
+                    borderRadius: config.type === 'bar' ? 4 : 0,
+                    fill: config.fill || false,
+                    tension: 0.4,
+                    pointBackgroundColor: isDark ? '#1e293b' : '#fff',
+                    pointBorderColor: config.colors[i].border,
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: dataArr.length > 1,
+                        position: 'top',
+                        labels: { boxWidth: 12, usePointStyle: true, font: {size: 11} }
+                    },
+                    tooltip: { 
+                        backgroundColor: 'rgba(17,24,39,0.9)', 
+                        padding: 10, 
+                        cornerRadius: 8,
+                        titleFont: { size: 12 },
+                        bodyFont: { size: 13, weight: 'bold' }
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { borderDash: [4, 4], color: isDark ? '#334155' : '#e5e7eb', drawBorder: false },
+                        ticks: { font: {size: 10} }
+                    },
+                    x: { 
+                        grid: { display: false, drawBorder: false },
+                        ticks: { maxRotation: 45, font: {size: 10} },
+                        stacked: config.stacked || false
+                    }
+                },
+                interaction: { intersect: false, mode: 'index' }
+            }
+        };
+
+        // Linear gradient for line charts
+        if (config.type === 'line' && config.fill) {
+            const g = ctx.createLinearGradient(0, 0, 0, 250);
+            g.addColorStop(0, config.colors[0].bgStart || 'rgba(59,130,246,0.3)');
+            g.addColorStop(1, 'rgba(59,130,246,0)');
+            chartConfig.data.datasets[0].backgroundColor = g;
+        }
+
+        chartInstance = new Chart(ctx, chartConfig);
+    }
+    
+    function updateChart() {
+        // Save prefs
+        localStorage.setItem('smfitness_dash_chart_type', currentChartType);
+        localStorage.setItem('smfitness_dash_exercise', currentExercise);
+        
+        // Show/hide exercise selector based on chart type
+        if (currentChartType === 'weight') {
+            customExContainer.style.display = 'block';
+        } else {
+            customExContainer.style.display = 'none';
+        }
+
+        // Init label for exercise
+        if (currentExercise) {
+            const exObj = exercisesList.find(e => e.value === currentExercise);
+            if (exObj) setCustomExerciseLabel(exObj.text);
+        }
+        
+        if (currentChartType === 'weight') {
+            chartTitleElement.textContent = "Прогресс весов (Макс. вес)";
+            if (!currentExercise) { drawChart([],[],[],{}); return; }
+            
+            // max weight per day
+            const dailyMax = {};
+            ALL_SETS.filter(s => s.e === currentExercise).forEach(s => {
+                const w = parseFloat(s.w) || 0;
+                if (!dailyMax[s.d] || w > dailyMax[s.d]) dailyMax[s.d] = w;
+            });
+            
+            const dates = Object.keys(dailyMax).sort();
+            const weights = dates.map(d => dailyMax[d]);
+            
+            drawChart(dates, ['Максимальный вес (кг)'], [weights], {
+                type: 'line',
+                fill: true,
+                colors: [{border: '#3b82f6', bgStart: 'rgba(59,130,246,0.3)'}]
+            });
+            
+        } else if (currentChartType === 'volume') {
+            chartTitleElement.textContent = "Объем тренировок по неделям";
+            const weeklyVol = {};
+            const weekDates = {};
+            ALL_SETS.forEach(s => {
+                const w = getWeekString(s.d);
+                weeklyVol[w] = (weeklyVol[w] || 0) + (parseFloat(s.v) || 0);
+                if (!weekDates[w]) weekDates[w] = s.d;
+            });
+            
+            const weeks = Object.keys(weeklyVol).sort();
+            const vols = weeks.map(w => formatNumber(weeklyVol[w]/1000)); // in tons
+            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            
+            drawChart(readableWeeks, ['Объем (тонн)'], [vols], {
+                type: 'bar',
+                colors: [{bg: 'rgba(16, 185, 129, 0.8)', border: '#059669'}]
+            });
+            
+        } else if (currentChartType === 'freq') {
+            chartTitleElement.textContent = "Количество тренировок по неделям";
+            const weeklyDays = {};
+            const weekDates = {};
+            ALL_SETS.forEach(s => {
+                const w = getWeekString(s.d);
+                if (!weeklyDays[w]) weeklyDays[w] = new Set();
+                weeklyDays[w].add(s.d);
+                if (!weekDates[w]) weekDates[w] = s.d;
+            });
+            ALL_CARDIO.forEach(c => {
+                 const w = getWeekString(c.d);
+                 if (!weeklyDays[w]) weeklyDays[w] = new Set();
+                 weeklyDays[w].add(c.d);
+                 if (!weekDates[w]) weekDates[w] = c.d;
+            });
+            
+            const weeks = Object.keys(weeklyDays).sort();
+            const counts = weeks.map(w => weeklyDays[w].size);
+            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            
+            drawChart(readableWeeks, ['Кол-во тренировок'], [counts], {
+                type: 'bar',
+                colors: [{bg: 'rgba(99, 102, 241, 0.8)', border: '#4f46e5'}]
+            });
+            
+        } else if (currentChartType === 'muscle') {
+            chartTitleElement.textContent = "Мышечные группы (кол-во подходов)";
+            const groupSets = {};
+            ALL_SETS.forEach(s => {
+                const g = GROUP_LABELS[s.m || 'other'] || s.m || 'Другое';
+                groupSets[g] = (groupSets[g] || 0) + parseInt(s.sets || 0);
+            });
+            
+            const sortedGroups = Object.keys(groupSets).sort((a,b) => groupSets[b] - groupSets[a]);
+            const sortedSets = sortedGroups.map(g => groupSets[g]);
+            
+            drawChart(sortedGroups, ['Подходы'], [sortedSets], {
+                type: 'bar',
+                colors: [{bg: 'rgba(245, 158, 11, 0.8)', border: '#d97706'}]
+            });
+            
+        } else if (currentChartType === 'cardio_min') {
+            chartTitleElement.textContent = "Кардио: Длительность по неделям";
+            const weeklyMin = {};
+            const weekDates = {};
+            ALL_CARDIO.forEach(c => {
+                const w = getWeekString(c.d);
+                weeklyMin[w] = (weeklyMin[w] || 0) + (parseFloat(c.m) || 0);
+                if (!weekDates[w]) weekDates[w] = c.d;
+            });
+            
+            const weeks = Object.keys(weeklyMin).sort();
+            const mins = weeks.map(w => formatNumber(weeklyMin[w]));
+            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            
+            drawChart(readableWeeks, ['Минуты'], [mins], {
+                type: 'bar',
+                colors: [{bg: 'rgba(244, 63, 94, 0.8)', border: '#e11d48'}]
+            });
+            
+        } else if (currentChartType === 'cardio_km') {
+             chartTitleElement.textContent = "Кардио: Дистанция по неделям";
+             const weeklyKm = {};
+             const weekDates = {};
+             ALL_CARDIO.forEach(c => {
+                 const w = getWeekString(c.d);
+                 weeklyKm[w] = (weeklyKm[w] || 0) + (parseFloat(c.k) || 0);
+                 if (!weekDates[w]) weekDates[w] = c.d;
+             });
+             
+             const weeks = Object.keys(weeklyKm).sort();
+             const kms = weeks.map(w => formatNumber(weeklyKm[w]));
+             const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+             
+             drawChart(readableWeeks, ['Км'], [kms], {
+                 type: 'bar',
+                 colors: [{bg: 'rgba(6, 182, 212, 0.8)', border: '#0891b2'}]
+             });
+        }
+    }
+    
+    // Initial Render
+    updateChart();
+</script>
+{% endblock %}

@@ -1,0 +1,1058 @@
+{% extends 'base.html' %}
+
+{% block title %}Добавить тренировку - SMFitness{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8 flex items-center gap-3">
+        <a href="{% url 'dashboard' %}" class="w-10 h-10 rounded-full bg-white dark:bg-dark-700 shadow-sm flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:shadow-md transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </a>
+        <div>
+            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Новая тренировка</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Запишите свои достижения</p>
+        </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 sm:p-8 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+        {% if formset.is_bound and not formset.is_valid or cardio_formset.is_bound and not cardio_formset.is_valid or workout_form.is_bound and not workout_form.is_valid %}
+        <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-600 dark:text-red-400">
+            <div class="font-bold flex items-center gap-2 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Не удалось сохранить тренировку. Проверьте правильность заполнения полей:
+            </div>
+            <ul class="list-disc list-inside space-y-1 ml-1 text-xs sm:text-sm">
+                {% if workout_form.errors %}
+                    {% for field in workout_form %}
+                        {% for error in field.errors %}<li>Общее ({{ field.label }}): {{ error }}</li>{% endfor %}
+                    {% endfor %}
+                    {% for error in workout_form.non_field_errors %}<li>Общее: {{ error }}</li>{% endfor %}
+                {% endif %}
+                
+                {% for f in formset %}
+                    {% if f.errors %}
+                        {% for field in f %}
+                            {% for error in field.errors %}<li>Упражнение #{{ forloop.parentloop.counter }} ({{ field.label }}): {{ error }}</li>{% endfor %}
+                        {% endfor %}
+                        {% for error in f.non_field_errors %}<li>Упражнение #{{ forloop.parentloop.counter }}: {{ error }}</li>{% endfor %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% for cform in cardio_formset %}
+                    {% if cform.errors %}
+                        {% for field in cform %}
+                            {% for error in field.errors %}<li>Кардио #{{ forloop.parentloop.counter }} ({{ field.label }}): {{ error }}</li>{% endfor %}
+                        {% endfor %}
+                        {% for error in cform.non_field_errors %}<li>Кардио #{{ forloop.parentloop.counter }}: {{ error }}</li>{% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post" id="workout-form" novalidate>
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Дата тренировки</label>
+                    {{ workout_form.date }}
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Заметки <span class="text-gray-400 font-normal">(опционально)</span></label>
+                    {{ workout_form.notes }}
+                </div>
+            </div>
+
+            {% if user_templates %}
+            <div class="mb-8 p-5 bg-gradient-to-br from-indigo-50 to-brand-50 dark:from-indigo-900/10 dark:to-brand-900/10 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl shadow-sm">
+                <label class="block text-sm font-bold text-indigo-900 dark:text-indigo-300 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                    Загрузить из шаблона
+                </label>
+                <!-- Скрытый оригинальный select для JS -->
+                <select id="template-loader" class="hidden">
+                    <option value="">-- Выберите шаблон --</option>
+                    {% for tpl in user_templates %}
+                        <option value="{{ tpl.id }}">{{ tpl.name }}</option>
+                    {% endfor %}
+                </select>
+                <!-- Кастомный дропдаун -->
+                <div class="custom-template-select relative" id="template-custom-select">
+                    <div class="template-trigger cursor-pointer w-full bg-white dark:bg-dark-800 border border-indigo-200 dark:border-indigo-700/50 rounded-xl px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between hover:border-brand-400 hover:shadow-md transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            </div>
+                            <span class="template-label">-- Выберите шаблон --</span>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 group-hover:text-brand-500 transition-all template-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="template-dropdown hidden absolute z-[90] left-0 right-0 top-full mt-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-2xl overflow-hidden">
+                        <div class="p-2 max-h-[350px] overflow-y-auto cust-scrollbar space-y-2">
+                            {% for tpl in user_templates %}
+                            <div class="template-card cursor-pointer p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-600 hover:bg-gradient-to-r hover:from-brand-50/50 hover:to-indigo-50/50 dark:hover:from-brand-900/10 dark:hover:to-indigo-900/10 transition-all group/card" data-template-id="{{ tpl.id }}" data-template-name="{{ tpl.name }}">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 group-hover/card:scale-110 transition-transform">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 dark:text-gray-100 text-sm">{{ tpl.name }}</h4>
+                                            <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Создан {{ tpl.created_at|date:"d.m.Y" }}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-lg whitespace-nowrap">{{ tpl.exercises.count }} упр.</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5 mt-2">
+                                    {% for te in tpl.exercises.all %}
+                                    <span class="text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-md">{{ te.exercise.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-2">Нажмите на шаблон, чтобы автоматически загрузить упражнения.</p>
+            </div>
+            {% endif %}
+
+            <div class="flex items-center justify-between mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </div>
+                    Упражнения
+                </h3>
+            </div>
+
+            {{ formset.management_form }}
+
+            <div id="formset-container" class="space-y-3">
+                {% for form in formset %}
+                <div class="formset-row group bg-white dark:bg-dark-700/50 border border-gray-100 dark:border-gray-700 p-4 rounded-xl hover:border-brand-200 dark:hover:border-brand-700 hover:border-l-brand-400 hover:border-l-[3px] transition-all flex flex-col md:flex-row gap-3 items-end relative">
+                    <button type="button" class="remove-form-btn absolute -right-2 -top-2 w-6 h-6 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm" title="Удалить">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                    <div class="w-full md:w-[40%]">
+                        <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Упражнение</label>
+                        <div class="exercise-search-wrapper hidden">{{ form.exercise }}</div>
+                        <div class="custom-exercise-select relative group/select">
+                            <div class="exercise-trigger cursor-pointer w-full bg-gray-50/50 dark:bg-dark-700/50 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between hover:bg-white dark:hover:bg-dark-700 hover:border-brand-400 transition-all shadow-sm">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="selected-icon hidden w-6 h-6 rounded-full bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    </div>
+                                    <span class="exercise-label truncate">-- Выберите упражнение --</span>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400 shrink-0 group-hover/select:text-brand-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <!-- Улучшенный выпадающий список -->
+                            <div class="exercise-dropdown hidden absolute z-[100] left-0 translate-y-2 w-full md:w-[450px] bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all animate-in fade-in zoom-in duration-200">
+                                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-dark-800/50 backdrop-blur-md sticky top-0 z-10">
+                                    <div class="relative">
+                                        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                        <input type="text" class="exercise-search w-full bg-white dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all text-gray-800 dark:text-gray-100" placeholder="Поиск по названию или группе...">
+                                    </div>
+                                </div>
+                                <div class="exercise-options overflow-y-auto max-h-[400px] p-2 space-y-1 cust-scrollbar">
+                                    <!-- Options will be here -->
+                                </div>
+                                <div class="p-3 bg-gray-50 dark:bg-dark-900/50 text-[10px] text-center font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-default">
+                                    SMFitness Exercises Library
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-[20%]">
+                        <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Подходы</label>
+                        {{ form.sets }}
+                    </div>
+                    <div class="w-full md:w-[20%]">
+                        <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Повторения</label>
+                        {{ form.reps }}
+                    </div>
+                    <div class="w-full md:w-[20%] flex flex-col justify-end">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Вес (кг)</label>
+                            <label class="relative inline-flex items-center cursor-pointer group" title="С собственным весом (без отягощения)">
+                                {{ form.is_bodyweight }}
+                                <div class="w-7 h-4 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-brand-500 transition-all duration-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3 shadow-inner"></div>
+                                <span class="ml-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors uppercase">Без веса</span>
+                            </label>
+                        </div>
+                        <div class="weight-input-wrapper transition-opacity duration-200">
+                            {{ form.weight }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 pt-5 border-t border-gray-100 dark:border-gray-700">
+                <button type="button" id="add-formset" class="w-full sm:w-auto flex items-center justify-center gap-2 text-brand-600 dark:text-brand-400 font-bold bg-brand-50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 px-5 py-2.5 rounded-xl transition text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    Добавить упражнение
+                </button>
+            </div>
+
+            <!-- ══ Cardio section ══ -->
+            <div class="mt-8">
+                <div class="flex items-center justify-between mb-5 pb-3 border-b border-emerald-100 dark:border-emerald-800/40">
+                    <h3 class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        </div>
+                        Кардио
+                    </h3>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Опционально &mdash; добавьте, если было кардио</span>
+                </div>
+
+                {{ cardio_formset.management_form }}
+
+                <div id="cardio-container" class="space-y-3">
+                    {% for cform in cardio_formset %}
+                    <div class="cardio-row group bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/40 p-4 rounded-xl flex flex-col gap-3 animate-fade-in relative transition-all">
+                        <button type="button" class="remove-form-btn absolute -right-2 -top-2 w-6 h-6 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm" title="Удалить">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        {% for hidden in cform.hidden_fields %}{{ hidden }}{% endfor %}
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div class="col-span-2 sm:col-span-1">
+                                <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Активность</label>
+                                <div class="cardio-select-wrapper hidden text-emerald-900">{{ cform.activity }}</div>
+                                <div class="custom-cardio-select relative group/select">
+                                    <div class="cardio-trigger cursor-pointer w-full bg-white dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/40 rounded-xl px-4 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400 flex items-center justify-between hover:bg-white dark:hover:bg-emerald-900/20 hover:border-emerald-400 transition-all shadow-sm">
+                                        <div class="flex items-center gap-2.5 overflow-hidden">
+                                            <div class="selected-icon w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-300 shrink-0">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                            </div>
+                                            <span class="selected-label truncate text-gray-700 dark:text-emerald-300">Выберите...</span>
+                                        </div>
+                                        <svg class="w-4 h-4 text-emerald-400 shrink-0 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                    <div class="cardio-dropdown absolute left-0 right-0 top-full mt-2 bg-white dark:bg-dark-800 border border-emerald-100 dark:border-emerald-800/60 rounded-2xl shadow-2xl z-50 hidden flex-col max-h-[300px] animate-slide-up backdrop-blur-xl overflow-hidden">
+                                        <div class="options-list overflow-y-auto p-2 space-y-1 flex-1 cust-scrollbar">
+                                            <!-- Options will be rendered here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Длительность (мин) *</label>
+                                {{ cform.duration_minutes }}
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Дистанция (км) <span class="normal-case font-normal">опц</span></label>
+                                {{ cform.distance_km }}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Ср. пульс (уд/мин) <span class="normal-case font-normal">опц</span></label>
+                                {{ cform.avg_heart_rate }}
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Сжжено ккал <span class="normal-case font-normal">опц</span></label>
+                                {{ cform.calories_burned }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-4">
+                    <button type="button" id="add-cardio" class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 px-5 py-2.5 rounded-xl transition text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                        Добавить кардио
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end pt-5 border-t border-gray-100 dark:border-gray-700">
+                <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-7 py-3 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.23)] hover:-translate-y-0.5 transition-all text-sm">
+                    Сохранить тренировку
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Template for dynamic exercise rows -->
+<div id="empty-form" class="hidden">
+    <div class="formset-row group bg-white dark:bg-dark-700/50 border border-gray-100 dark:border-gray-700 p-4 rounded-xl hover:border-brand-200 dark:hover:border-brand-700 hover:border-l-brand-400 hover:border-l-[3px] transition-all flex flex-col md:flex-row gap-3 items-end relative transition-all duration-300">
+        <button type="button" class="remove-form-btn absolute -right-2 -top-2 w-6 h-6 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm" title="Удалить">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <div class="w-full md:w-[40%]">
+            <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Упражнение</label>
+            <div class="exercise-search-wrapper hidden">{{ formset.empty_form.exercise }}</div>
+            <div class="custom-exercise-select relative group/select">
+                <div class="exercise-trigger cursor-pointer w-full bg-gray-50/50 dark:bg-dark-700/50 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between hover:bg-white dark:hover:bg-dark-700 hover:border-brand-400 transition-all shadow-sm">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="selected-icon hidden w-6 h-6 rounded-full bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <span class="exercise-label truncate">-- Выберите упражнение --</span>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400 shrink-0 group-hover/select:text-brand-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <div class="exercise-dropdown hidden absolute z-[100] left-0 translate-y-2 w-full md:w-[450px] bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all animate-in fade-in zoom-in duration-200">
+                    <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-dark-800/50 backdrop-blur-md sticky top-0 z-10">
+                        <div class="relative">
+                            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" class="exercise-search w-full bg-white dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all text-gray-800 dark:text-gray-100" placeholder="Поиск по названию или группе...">
+                        </div>
+                    </div>
+                    <div class="exercise-options overflow-y-auto max-h-[400px] p-2 space-y-1 cust-scrollbar"></div>
+                    <div class="p-3 bg-gray-50 dark:bg-dark-900/50 text-[10px] text-center font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-default">
+                        SMFitness Exercises Library
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-full md:w-[20%]">
+            <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Подходы</label>
+            {{ formset.empty_form.sets }}
+        </div>
+        <div class="w-full md:w-[20%]">
+            <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Повторения</label>
+            {{ formset.empty_form.reps }}
+        </div>
+        <div class="w-full md:w-[20%] flex flex-col justify-end">
+            <div class="flex items-center justify-between mb-1">
+                <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Вес (кг)</label>
+                <label class="relative inline-flex items-center cursor-pointer group" title="С собственным весом (без отягощения)">
+                    {{ formset.empty_form.is_bodyweight }}
+                    <div class="w-7 h-4 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-brand-500 transition-all duration-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3 shadow-inner"></div>
+                    <span class="ml-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors uppercase">Без веса</span>
+                </label>
+            </div>
+            <div class="weight-input-wrapper transition-opacity duration-200">
+                {{ formset.empty_form.weight }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty cardio form template for dynamic rows -->
+<div id="empty-cardio-form" class="hidden">
+    <div class="cardio-row group bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/40 p-4 rounded-xl flex flex-col gap-3 animate-fade-in relative transition-all duration-300">
+        <button type="button" class="remove-form-btn absolute -right-2 -top-2 w-6 h-6 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm" title="Удалить">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        {% for hidden in cardio_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div class="col-span-2 sm:col-span-1">
+                <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Активность</label>
+                <div class="cardio-select-wrapper hidden text-emerald-900">{{ cardio_formset.empty_form.activity }}</div>
+                <div class="custom-cardio-select relative group/select">
+                    <div class="cardio-trigger cursor-pointer w-full bg-white dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/40 rounded-xl px-4 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400 flex items-center justify-between hover:bg-white dark:hover:bg-emerald-900/20 hover:border-emerald-400 transition-all shadow-sm">
+                        <div class="flex items-center gap-2.5 overflow-hidden">
+                            <div class="selected-icon w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-300 shrink-0">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <span class="selected-label truncate text-gray-700 dark:text-emerald-300">Выберите...</span>
+                        </div>
+                        <svg class="w-4 h-4 text-emerald-400 shrink-0 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="cardio-dropdown absolute left-0 right-0 top-full mt-2 bg-white dark:bg-dark-800 border border-emerald-100 dark:border-emerald-800/60 rounded-2xl shadow-2xl z-50 hidden flex-col max-h-[300px] animate-slide-up backdrop-blur-xl overflow-hidden">
+                        <div class="options-list overflow-y-auto p-2 space-y-1 flex-1 cust-scrollbar">
+                            <!-- Options will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Длительность (мин) *</label>
+                {{ cardio_formset.empty_form.duration_minutes }}
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Дистанция (км) <span class="normal-case font-normal">опц</span></label>
+                {{ cardio_formset.empty_form.distance_km }}
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Ср. пульс (уд/мин) <span class="normal-case font-normal">опц</span></label>
+                {{ cardio_formset.empty_form.avg_heart_rate }}
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Сжжено ккал <span class="normal-case font-normal">опц</span></label>
+                {{ cardio_formset.empty_form.calories_burned }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+#formset-container input,
+#empty-form input,
+#cardio-container input,
+#empty-cardio-form input {
+    width:100%;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:0.75rem;padding:0.5rem 0.75rem;outline:none;transition:all 0.2s;color:#1f2937;font-weight:500;font-size:0.875rem;
+}
+.dark #formset-container input,
+.dark #empty-form input,
+.dark #cardio-container input,
+.dark #empty-cardio-form input {
+    background-color:#1e293b !important;border-color:#475569 !important;color:#e2e8f0 !important;
+}
+#formset-container input:focus,
+#empty-form input:focus,
+#cardio-container input:focus,
+#empty-cardio-form input:focus {
+    background-color:#fff;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.15);
+}
+.dark #formset-container input:focus,
+.dark #empty-form input:focus,
+.dark #cardio-container input:focus,
+.dark #empty-cardio-form input:focus {
+    background-color:#1e293b !important;border-color:#3b82f6 !important;box-shadow:0 0 0 3px rgba(59,130,246,0.2) !important;
+}
+.dark form input[type="date"], .dark form textarea {
+    background-color:#1e293b !important;border-color:#475569 !important;color:#e2e8f0 !important;
+}
+.exercise-search {
+    padding-left: 3rem !important;
+}
+/* Custom Switch */
+input[name$="-is_bodyweight"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+/* Exercise option items */
+.exercise-group-label {
+    padding: 0.75rem 1rem 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.exercise-group-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #f1f5f9;
+}
+.dark .exercise-group-label::after {
+    background: #334155;
+}
+
+.exercise-option {
+    padding: 0.85rem 1rem;
+    font-size: 0.9375rem;
+    cursor:pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-radius: 0.85rem;
+    border: 1px solid transparent;
+}
+.exercise-option:hover { 
+    background: #f8fafc; 
+    border-color: #e2e8f0;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.dark .exercise-option:hover { 
+    background: #1e293b; 
+    border-color: #334155;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.exercise-option.selected { 
+    background: #eff6ff; 
+    color: #2563eb; 
+    font-weight: 600; 
+    border-color: #bfdbfe;
+}
+.dark .exercise-option.selected { 
+    background: rgba(30, 58, 138, 0.4); 
+    color: #60a5fa; 
+    border-color: #1e3a8a;
+}
+.exercise-option .ex-name {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.exercise-option .ex-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+.dark .exercise-option .ex-icon {
+    background: #0f172a;
+    color: #94a3b8;
+}
+.exercise-option:hover .ex-icon {
+    background: #e0e7ff;
+    color: #4f46e5;
+    transform: rotate(15deg) scale(1.1);
+}
+.dark .exercise-option:hover .ex-icon {
+    background: #312e81;
+    color: #818cf8;
+}
+.exercise-option .ex-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.25rem 0.65rem;
+    border-radius: 0.5rem;
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+.dark .exercise-option .ex-badge {
+    background: #0f172a;
+    color: #94a3b8;
+    border-color: #334155;
+}
+/* Custom scrollbar */
+.cust-scrollbar::-webkit-scrollbar { width: 6px; }
+.cust-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.cust-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+.dark .cust-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+.cust-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+</style>
+
+<script id="exercises-data" type="application/json">
+    {{ exercises_json|safe }}
+</script>
+
+<script>
+// ── Map of exercises to muscle groups (from Django context) ──
+let EXERCISES_MAP = {};
+try {
+    const dataStr = document.getElementById('exercises-data').textContent;
+    EXERCISES_MAP = JSON.parse(dataStr);
+} catch (e) {
+    console.warn("Could not parse exercises data:", e);
+}
+
+// ── Muscle group labels ──
+const GROUP_LABELS = {
+    'chest':'Грудь','back':'Спина','shoulders':'Плечи','biceps':'Бицепс',
+    'triceps':'Трицепс','legs':'Ноги','abs':'Пресс','other':'Другое'
+};
+
+// ── Build exercise data from hidden selects ──
+function getExerciseData(selectEl) {
+    const data = [];
+    for (const opt of selectEl.options) {
+        if (opt.value) {
+            // Parse group from option text or use fallback
+            data.push({ value: opt.value, text: opt.textContent.trim() });
+        }
+    }
+    return data;
+}
+
+// ── Init a custom exercise selector ──
+function initExerciseSelector(row) {
+    const wrapper = row.querySelector('.exercise-search-wrapper');
+    if (!wrapper) return;
+    const originalSelect = wrapper.querySelector('select');
+    if (!originalSelect) return;
+
+    const custom = row.querySelector('.custom-exercise-select');
+    const trigger = custom.querySelector('.exercise-trigger');
+    const label = trigger.querySelector('.exercise-label');
+    const dropdown = custom.querySelector('.exercise-dropdown');
+    const searchInput = custom.querySelector('.exercise-search');
+    const optionsContainer = custom.querySelector('.exercise-options');
+
+    const exercises = getExerciseData(originalSelect);
+
+    // Set initial label if a value is preselected
+    if (originalSelect.value) {
+        const selected = exercises.find(e => e.value === originalSelect.value);
+        if (selected) {
+            updateLabel(selected.text);
+        }
+    }
+
+    function updateLabel(text) {
+        label.textContent = text;
+        label.classList.remove('text-gray-500','dark:text-gray-400');
+        label.classList.add('text-gray-800','dark:text-gray-100','font-bold');
+        const iconDiv = trigger.querySelector('.selected-icon');
+        if (iconDiv) iconDiv.classList.remove('hidden');
+    }
+
+    function renderOptions(filter = '') {
+        optionsContainer.innerHTML = '';
+        const q = filter.toLowerCase();
+        
+        // Filter and then group
+        const filtered = exercises.filter(e => {
+            const groupKey = EXERCISES_MAP[e.value] || 'other';
+            const groupLabel = GROUP_LABELS[groupKey] || groupKey;
+            return e.text.toLowerCase().includes(q) || groupLabel.toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+            optionsContainer.innerHTML = '<div class="p-8 text-center"><div class="text-gray-300 dark:text-gray-600 mb-2"><svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div><div class="text-sm font-medium text-gray-500">Упражнение не найдено</div></div>';
+            return;
+        }
+
+        // Grouping
+        const grouped = {};
+        filtered.forEach(ex => {
+            const groupKey = EXERCISES_MAP[ex.value] || 'other';
+            if (!grouped[groupKey]) grouped[groupKey] = [];
+            grouped[groupKey].push(ex);
+        });
+
+        // Order groups: first defined ones, then 'other'
+        const groupOrder = Object.keys(GROUP_LABELS);
+        
+        groupOrder.forEach(gKey => {
+            if (grouped[gKey]) {
+                const groupLabel = GROUP_LABELS[gKey];
+                const header = document.createElement('div');
+                header.className = 'exercise-group-label';
+                header.innerHTML = `<span>${groupLabel}</span>`;
+                optionsContainer.appendChild(header);
+
+                grouped[gKey].forEach(ex => {
+                    const div = document.createElement('div');
+                    div.className = 'exercise-option' + (originalSelect.value === ex.value ? ' selected' : '');
+                    div.innerHTML = `
+                        <div class="ex-name">
+                            <div class="ex-icon">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <span>${ex.text}</span>
+                        </div>
+                        <span class="ex-badge">${groupLabel}</span>
+                    `;
+                    div.addEventListener('click', () => {
+                        originalSelect.value = ex.value;
+                        updateLabel(ex.text);
+                        // Trigger change event for Django validation or other scripts
+                        originalSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        closeDropdown();
+                    });
+                    optionsContainer.appendChild(div);
+                });
+            }
+        });
+    }
+
+    function openDropdown() {
+        dropdown.classList.remove('hidden');
+        dropdown.classList.add('flex');
+        searchInput.value = '';
+        renderOptions();
+        setTimeout(() => searchInput.focus(), 50);
+    }
+
+    function closeDropdown() {
+        dropdown.classList.add('hidden');
+        dropdown.classList.remove('flex');
+    }
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close all other dropdowns first
+        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown').forEach(d => {
+            if (d !== dropdown) { d.classList.add('hidden'); d.classList.remove('flex'); }
+        });
+        if (dropdown.classList.contains('hidden')) openDropdown();
+        else closeDropdown();
+    });
+
+    searchInput.addEventListener('input', () => renderOptions(searchInput.value));
+    searchInput.addEventListener('click', e => e.stopPropagation());
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Escape') closeDropdown(); });
+}
+
+// ── Cardio Map for icons ──
+const CARDIO_MAP = {
+    'run': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
+    'cycling': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 4l-6 3"></path></svg>' },
+    'swimming': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>' },
+    'rowing': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>' },
+    'elliptical': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m-8 4h8m-8-8h8M3 10V4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1z"></path></svg>' },
+    'jump_rope': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' },
+    'walk': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>' },
+    'hiit': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.99 7.99 0 0120 13a7.99 7.99 0 01-2.343 5.657z"></path></svg>' },
+    'other': { icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>' }
+};
+
+// ── Init a custom cardio selector ──
+function initCardioSelector(row) {
+    const wrapper = row.querySelector('.cardio-select-wrapper');
+    if (!wrapper) return;
+    const originalSelect = wrapper.querySelector('select');
+    if (!originalSelect) return;
+
+    const custom = row.querySelector('.custom-cardio-select');
+    const trigger = custom.querySelector('.cardio-trigger');
+    const label = trigger.querySelector('.selected-label');
+    const iconDiv = trigger.querySelector('.selected-icon');
+    const dropdown = custom.querySelector('.cardio-dropdown');
+    const optionsContainer = custom.querySelector('.options-list');
+
+    function updateLabel() {
+        const selectedOpt = originalSelect.options[originalSelect.selectedIndex];
+        if (selectedOpt && selectedOpt.value) {
+            label.textContent = selectedOpt.text;
+            const info = CARDIO_MAP[selectedOpt.value] || CARDIO_MAP['other'];
+            iconDiv.innerHTML = info.icon;
+        } else {
+            label.textContent = 'Выберите...';
+            iconDiv.innerHTML = CARDIO_MAP['other'].icon;
+        }
+    }
+
+    function renderOptions() {
+        optionsContainer.innerHTML = '';
+        Array.from(originalSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            const div = document.createElement('div');
+            div.className = 'exercise-option' + (originalSelect.value === opt.value ? ' selected' : '');
+            const info = CARDIO_MAP[opt.value] || CARDIO_MAP['other'];
+            div.innerHTML = `
+                <div class="ex-name">
+                    <div class="ex-icon">${info.icon}</div>
+                    <span>${opt.text}</span>
+                </div>
+            `;
+            div.addEventListener('click', () => {
+                originalSelect.value = opt.value;
+                updateLabel();
+                originalSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                closeDropdown();
+            });
+            optionsContainer.appendChild(div);
+        });
+    }
+
+    function openDropdown() {
+        dropdown.classList.remove('hidden');
+        dropdown.classList.add('flex');
+        renderOptions();
+        optionsContainer.focus();
+    }
+
+    function closeDropdown() {
+        dropdown.classList.add('hidden');
+        dropdown.classList.remove('flex');
+    }
+
+    dropdown.addEventListener('click', e => e.stopPropagation());
+    optionsContainer.setAttribute('tabindex', '-1');
+    optionsContainer.style.outline = 'none';
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown').forEach(d => {
+            if (d !== dropdown) { d.classList.add('hidden'); if (d.classList.contains('exercise-dropdown') || d.classList.contains('cardio-dropdown')) d.classList.remove('flex'); }
+        });
+        if (dropdown.classList.contains('hidden')) openDropdown();
+        else closeDropdown();
+    });
+
+    updateLabel();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ── Bodyweight Toggle Logic ──
+    function initBodyweightToggle(row) {
+        const checkbox = row.querySelector('input[type="checkbox"][name$="-is_bodyweight"]');
+        const weightInput = row.querySelector('input[name$="-weight"]');
+        const weightWrapper = row.querySelector('.weight-input-wrapper');
+        
+        if (!checkbox || !weightInput || !weightWrapper) return;
+
+        function toggleWeightField() {
+            if (checkbox.checked) {
+                weightWrapper.style.opacity = '0.3';
+                weightInput.disabled = true;
+                weightInput.value = ''; // clear value
+            } else {
+                weightWrapper.style.opacity = '1';
+                weightInput.disabled = false;
+            }
+        }
+
+        // Initialize state
+        toggleWeightField();
+        
+        // Listen changes
+        checkbox.addEventListener('change', toggleWeightField);
+    }
+
+    // Init all existing rows
+    document.querySelectorAll('#formset-container .formset-row').forEach(row => {
+        initExerciseSelector(row);
+        initBodyweightToggle(row);
+    });
+    
+    document.querySelectorAll('#cardio-container .cardio-row').forEach(row => {
+        initCardioSelector(row);
+    });
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.exercise-dropdown, .cardio-dropdown').forEach(d => { 
+            d.classList.add('hidden'); 
+            if (d.classList.contains('exercise-dropdown')) d.classList.remove('flex');
+        });
+    });
+
+    // Add formset button
+    const addBtn = document.getElementById('add-formset');
+    const container = document.getElementById('formset-container');
+    const totalForms = document.getElementById('id_sets-TOTAL_FORMS');
+    const template = document.getElementById('empty-form').innerHTML;
+
+    addBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        const n = parseInt(totalForms.value);
+        const newHtml = template.replace(/__prefix__/g, n);
+        container.insertAdjacentHTML('beforeend', newHtml);
+        totalForms.value = n + 1;
+        // Init the new row's custom select and bodyweight flag
+        const newRow = container.lastElementChild;
+        initExerciseSelector(newRow);
+        initBodyweightToggle(newRow);
+        newRow.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+
+    // ── Cardio dynamic rows ──
+    const addCardioBtn = document.getElementById('add-cardio');
+    const cardioContainer = document.getElementById('cardio-container');
+    const cardioTotalForms = document.getElementById('id_cardio-TOTAL_FORMS');
+    const cardioTemplate = document.getElementById('empty-cardio-form').innerHTML;
+
+    if (cardioContainer) {
+        cardioContainer.addEventListener('change', function(e) {
+            if (e.target && e.target.tagName === 'SELECT' && e.target.name.includes('-activity')) {
+                const row = e.target.closest('.cardio-row');
+                if (!row) return;
+                const distInput = row.querySelector('[name*="-distance_km"]');
+                if (!distInput) return;
+                
+                const distContainer = distInput.closest('div');
+                const noDist = ['jump_rope', 'hiit', 'other', 'elliptical'];
+                if (noDist.includes(e.target.value)) {
+                    distContainer.style.opacity = '0.3';
+                    distContainer.style.pointerEvents = 'none';
+                    distInput.value = '';
+                    distInput.disabled = true;
+                } else {
+                    distContainer.style.opacity = '1';
+                    distContainer.style.pointerEvents = 'auto';
+                    distInput.disabled = false;
+                }
+            }
+        });
+
+        // Trigger change on load for all existing cardio rows
+        setTimeout(() => {
+            cardioContainer.querySelectorAll('select[name*="-activity"]').forEach(sel => {
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        }, 100);
+    }
+
+    if (addCardioBtn && cardioTotalForms) {
+        addCardioBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const n = parseInt(cardioTotalForms.value);
+            const newHtml = cardioTemplate.replace(/__prefix__/g, n);
+            cardioContainer.insertAdjacentHTML('beforeend', newHtml);
+            cardioTotalForms.value = n + 1;
+            const newRow = cardioContainer.lastElementChild;
+            initCardioSelector(newRow); // Init custom select for the new row
+            const selectEl = newRow.querySelector('select[name*="-activity"]');
+            if (selectEl) selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            newRow.scrollIntoView({behavior:'smooth', block:'center'});
+        });
+    }
+
+    // ── Remove functionality ──
+    function initRemoveButtons(containerId, prefix) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.addEventListener('click', function(e) {
+            const btn = e.target.closest('.remove-form-btn');
+            if (!btn) return;
+            
+            const rows = container.querySelectorAll('.' + (prefix === 'sets' ? 'formset-row' : 'cardio-row'));
+            if (prefix === 'sets' && rows.length <= 1) {
+                showNotification("Дневник тренировок должен содержать хотя бы одно упражнение.");
+                return;
+            }
+
+            const row = btn.closest('.' + (prefix === 'sets' ? 'formset-row' : 'cardio-row'));
+            row.style.opacity = '0';
+            row.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                row.remove();
+                reindexForms(container, prefix);
+            }, 300);
+        });
+    }
+
+    function reindexForms(container, prefix) {
+        const rows = container.querySelectorAll('.' + (prefix === 'sets' ? 'formset-row' : 'cardio-row'));
+        const totalForms = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+        if (totalForms) totalForms.value = rows.length;
+        
+        rows.forEach((r, idx) => {
+            const regex = new RegExp(prefix + '-\\d+-', 'g');
+            const replacement = prefix + '-' + idx + '-';
+            
+            r.querySelectorAll('input, select, textarea, label').forEach(el => {
+                if (el.name) el.name = el.name.replace(regex, replacement);
+                if (el.id) el.id = el.id.replace(regex, replacement);
+                if (el.htmlFor) el.htmlFor = el.htmlFor.replace(regex, replacement);
+            });
+        });
+    }
+
+    initRemoveButtons('formset-container', 'sets');
+    initRemoveButtons('cardio-container', 'cardio');
+
+    // ── Template loader (custom dropdown) ──
+    const templateCustomSelect = document.getElementById('template-custom-select');
+    if (templateCustomSelect) {
+        const tplTrigger = templateCustomSelect.querySelector('.template-trigger');
+        const tplDropdown = templateCustomSelect.querySelector('.template-dropdown');
+        const tplLabel = templateCustomSelect.querySelector('.template-label');
+        const tplChevron = templateCustomSelect.querySelector('.template-chevron');
+        const tplCards = templateCustomSelect.querySelectorAll('.template-card');
+        const templateLoader = document.getElementById('template-loader');
+
+        function openTplDropdown() {
+            tplDropdown.classList.remove('hidden');
+            tplChevron.style.transform = 'rotate(180deg)';
+        }
+        function closeTplDropdown() {
+            tplDropdown.classList.add('hidden');
+            tplChevron.style.transform = '';
+        }
+
+        tplTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (tplDropdown.classList.contains('hidden')) openTplDropdown();
+            else closeTplDropdown();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!templateCustomSelect.contains(e.target)) closeTplDropdown();
+        });
+
+        tplCards.forEach(card => {
+            card.addEventListener('click', async function() {
+                const tplId = this.dataset.templateId;
+                const tplName = this.dataset.templateName;
+                
+                // Update visual label
+                tplLabel.textContent = tplName;
+                tplLabel.classList.add('text-gray-800', 'dark:text-gray-100', 'font-bold');
+                tplLabel.classList.remove('text-gray-500', 'dark:text-gray-400');
+                closeTplDropdown();
+
+                // Load template exercises via API
+                try {
+                    const res = await fetch(`/api/templates/${tplId}/`);
+                    const data = await res.json();
+                    
+                    const container = document.getElementById('formset-container');
+                    const totalForms = document.getElementById('id_sets-TOTAL_FORMS');
+                    const template = document.getElementById('empty-form').innerHTML;
+                    
+                    let n = parseInt(totalForms.value);
+                    
+                    data.exercises.forEach(ex => {
+                        for (let i = 0; i < ex.sets_count; i++) {
+                            const newHtml = template.replace(/__prefix__/g, n);
+                            container.insertAdjacentHTML('beforeend', newHtml);
+                            
+                            const newRow = container.lastElementChild;
+                            initExerciseSelector(newRow);
+                            initBodyweightToggle(newRow);
+                            
+                            // Set the hidden select value and update label
+                            const selectEl = newRow.querySelector('select[name$="-exercise"]');
+                            if (selectEl) {
+                                selectEl.value = ex.exercise_id;
+                                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                                
+                                // Update the custom exercise label
+                                const exLabel = newRow.querySelector('.exercise-label');
+                                const exIcon = newRow.querySelector('.selected-icon');
+                                if (exLabel) {
+                                    exLabel.textContent = ex.exercise_name;
+                                    exLabel.classList.add('text-gray-800', 'dark:text-gray-100', 'font-bold');
+                                    exLabel.classList.remove('text-gray-500', 'dark:text-gray-400');
+                                }
+                                if (exIcon) exIcon.classList.remove('hidden');
+                            }
+                            n++;
+                        }
+                    });
+                    totalForms.value = n;
+                    
+                    // Reset label
+                    tplLabel.textContent = '-- Выберите шаблон --';
+                    tplLabel.classList.remove('text-gray-800', 'dark:text-gray-100', 'font-bold');
+                    tplLabel.classList.add('text-gray-500', 'dark:text-gray-400');
+                    
+                    if (container.lastElementChild) {
+                        container.lastElementChild.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    }
+                } catch (e) {
+                    console.error("Ошибка загрузки шаблона", e);
+                    showNotification("Не удалось загрузить шаблон.");
+                }
+            });
+        });
+    }
+
+    // ── Pre-submit validation ──
+    const workoutForm = document.getElementById('workout-form');
+    if (workoutForm) {
+        workoutForm.addEventListener('submit', function(e) {
+            const exerciseRows = document.querySelectorAll('#formset-container .formset-row');
+            const cardioRows = document.querySelectorAll('#cardio-container .cardio-row');
+            
+            // Check if at least one exercise OR one cardio entry is present
+            // But usually we want at least one exercise. 
+            // If user explicitly wants to save only cardio, maybe allow it?
+            // User requirement said "должен содержать хотя бы одно упражнение".
+            
+            if (exerciseRows.length === 0) {
+                e.preventDefault();
+                showNotification("Чтобы сохранить тренировку, добавьте хотя бы одно упражнение.");
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

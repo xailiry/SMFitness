@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация - SMFitness{% endblock %}
+
+{% block content %}
+<div class="min-h-[65vh] flex items-center justify-center">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8 animate-slide-up">
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Создать аккаунт</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Начните свой фитнес-путь</p>
+        </div>
+        <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/60 dark:border-gray-700/40 animate-slide-up" style="animation-delay:0.1s;opacity:0">
+            {% if form.errors %}
+            <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">
+                {% for field in form %}{% for error in field.errors %}<p>{{ error }}</p>{% endfor %}{% endfor %}
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            {% endif %}
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Имя пользователя</label>
+                    <input type="text" name="username" required autofocus value="{{ form.username.value|default:'' }}" class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder-gray-400" placeholder="Придумайте логин">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Пароль</label>
+                    <input type="password" name="password1" required class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder-gray-400" placeholder="Минимум 8 символов">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Подтвердите пароль</label>
+                    <input type="password" name="password2" required class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder-gray-400" placeholder="Повторите пароль">
+                </div>
+                <button type="submit" class="w-full btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-brand-500/20 active:scale-[0.98] transition-all">Зарегистрироваться</button>
+            </form>
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">Уже есть аккаунт? <a href="{% url 'login' %}" class="text-brand-600 dark:text-brand-400 font-bold hover:underline">Войти</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

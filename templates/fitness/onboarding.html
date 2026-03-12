@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Добро пожаловать - SMFitness{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+    <div class="w-full max-w-lg">
+        <div class="text-center mb-10 animate-slide-up">
+            <div
+                class="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 shadow-xl shadow-brand-500/30 items-center justify-center text-white mb-5 animate-float">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Добро пожаловать!</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Давайте настроим ваш профиль для идеального старта</p>
+        </div>
+
+        <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/60 dark:border-gray-700/40 animate-slide-up"
+            style="animation-delay:0.1s;opacity:0">
+            <!-- Progress Bar -->
+            <div class="mb-8 relative">
+                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div id="progress-bar" style="width: 0%"
+                        class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-brand-500 transition-all duration-500">
+                    </div>
+                </div>
+                <div class="flex justify-between text-xs font-bold text-gray-400 px-1">
+                    <span id="step1-indicator" class="text-brand-600 dark:text-brand-400">Цель</span>
+                    <span id="step2-indicator">Параметры</span>
+                    <span id="step3-indicator">Ориентир</span>
+                </div>
+            </div>
+
+            {% if form.errors %}
+            <div
+                class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">
+                Пожалуйста, исправьте ошибки ниже.
+            </div>
+            {% endif %}
+
+            <form method="post" id="onboarding-form" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Step 1: Goal -->
+                <div id="step-1" class="transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">Какая ваша главная
+                        фитнес-цель?</h3>
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        {% for value, label in form.fields.goal.choices %}
+                        <label class="cursor-pointer relative">
+                            <input type="radio" name="goal" value="{{ value }}" class="peer sr-only" {% if form.goal.value == value %}checked{% endif %}>
+                            <div
+                                class="h-full flex items-center justify-center rounded-xl border-2 border-gray-100 dark:border-gray-700 p-4 text-center hover:bg-gray-50 dark:hover:bg-dark-700 peer-checked:border-brand-500 peer-checked:bg-brand-50 dark:peer-checked:bg-brand-900/20 peer-checked:text-brand-700 dark:peer-checked:text-brand-400 transition-all font-bold text-sm text-gray-600 dark:text-gray-300">
+                                {{ label }}
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <button type="button" onclick="nextStep()"
+                        class="w-full btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-brand-500/20 active:scale-[0.98] transition-all">Далее
+                        →</button>
+                </div>
+
+                <!-- Step 2: Params -->
+                <div id="step-2" class="hidden transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">Ваши физические
+                        параметры</h3>
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Рост
+                                (см)</label>
+                            <input type="number" name="height" value="{{ form.height.value|default:'' }}" required
+                                class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder-gray-400 text-center font-bold text-lg"
+                                placeholder="175">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Текущий вес
+                                (кг)</label>
+                            <input type="number" step="0.1" name="current_weight"
+                                value="{{ form.current_weight.value|default:'' }}" required
+                                class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder-gray-400 text-center font-bold text-lg"
+                                placeholder="70.5">
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="prevStep()"
+                            class="w-1/3 bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">←
+                            Назад</button>
+                        <button type="button" onclick="nextStep()"
+                            class="w-2/3 btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-brand-500/20 active:scale-[0.98] transition-all">Далее
+                            →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Target Weight -->
+                <div id="step-3" class="hidden transition-all duration-300">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Целевой вес</h3>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Укажите вес, к которому вы стремитесь (необязательно)</p>
+                    </div>
+                    
+                    <div class="bg-brand-50/50 dark:bg-brand-900/10 p-6 rounded-2xl border border-brand-100 dark:border-brand-900/20 mb-6">
+                        <div class="text-center">
+                            <label class="block text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Ваша цель (кг)</label>
+                            <input type="number" step="0.1" name="target_weight"
+                                value="{{ form.target_weight.value|default:'' }}"
+                                class="w-32 bg-white dark:bg-dark-700 border-2 border-brand-200 dark:border-brand-800 text-brand-600 dark:text-brand-400 rounded-2xl px-4 py-4 outline-none focus:border-brand-500 transition-all placeholder-gray-300 text-center font-black text-3xl shadow-inner mx-auto"
+                                placeholder="--.-">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="prevStep()"
+                            class="w-1/3 bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">←
+                            Назад</button>
+                        <button type="submit"
+                            class="w-2/3 btn-gradient bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all">Начать
+                            тренировки 🚀</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+
+    function nextStep() {
+        if (currentStep === 1) {
+            const selectedGoal = document.querySelector('input[name="goal"]:checked');
+            if (!selectedGoal) {
+                showNotification('Пожалуйста, выберите цель тренировок!', 'error');
+                return;
+            }
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('progress-bar').style.width = '50%';
+            document.getElementById('step2-indicator').classList.add('text-brand-600', 'dark:text-brand-400');
+            currentStep = 2;
+        } else if (currentStep === 2) {
+            const height = document.querySelector('input[name="height"]').value;
+            const weight = document.querySelector('input[name="current_weight"]').value;
+            if (!height || !weight) {
+                showNotification('Пожалуйста, заполните рост и текущий вес!', 'error');
+                return;
+            }
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-3').classList.remove('hidden');
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('step3-indicator').classList.add('text-brand-600', 'dark:text-brand-400');
+            currentStep = 3;
+        }
+    }
+
+    function prevStep() {
+        if (currentStep === 2) {
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-1').classList.remove('hidden');
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('step2-indicator').classList.remove('text-brand-600', 'dark:text-brand-400');
+            currentStep = 1;
+        } else if (currentStep === 3) {
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('progress-bar').style.width = '50%';
+            document.getElementById('step3-indicator').classList.remove('text-brand-600', 'dark:text-brand-400');
+            currentStep = 2;
+        }
+    }
+
+</script>
+{% endblock %}

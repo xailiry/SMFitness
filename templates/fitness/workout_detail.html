@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Тренировка {{ workout.date|date:"d.m.Y" }} - SMFitness{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'dashboard' %}" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-dark-700 shadow-sm flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </a>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white">Тренировка</h1>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ workout.date|date:"d E Y, l" }}</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Save to templates btn -->
+            <button type="button" onclick="showTemplateModal()" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-brand-600 bg-brand-50 dark:bg-brand-900/20 px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                <span>В шаблоны</span>
+            </button>
+            <form method="post" action="{% url 'delete_workout' workout.pk %}" class="flex-1 sm:flex-none" id="delete-workout-form" onsubmit="event.preventDefault(); showConfirmModal('Удалить тренировку?', 'Это действие нельзя отменить.', () => this.submit());">
+                {% csrf_token %}
+                <button type="submit" class="w-full flex items-center justify-center gap-1.5 text-red-500 bg-red-50 dark:bg-red-900/20 px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <span>Удалить</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-5 sm:p-8 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+        {% if workout.notes %}
+        <div class="mb-5 bg-gray-50/80 dark:bg-dark-700/50 rounded-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-1 h-full bg-brand-400"></div>
+            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 italic pl-2 sm:pl-3">"{{ workout.notes }}"</p>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-3 gap-2 sm:gap-6 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
+            {% if workout.sets.exists %}
+            <div class="text-center">
+                <p class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight">{{ workout.sets.count }}</p>
+                <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter">Упр.</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight">{{ workout.total_volume|floatformat:0 }}</p>
+                <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter">Объём (кг)</p>
+            </div>
+            {% endif %}
+
+            {% if workout.cardio_entries.exists %}
+            <div class="text-center">
+                <p class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight">{{ workout.total_cardio_minutes|default:"0" }}</p>
+                <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter">Кардио (мин)</p>
+            </div>
+            {% endif %}
+
+            {% if workout.sets.exists and not workout.cardio_entries.exists %}
+            <div class="text-center">
+                <p class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight">
+                    {% with max_w=workout.sets.all|dictsort:"weight"|last %}
+                        {% if max_w %}{{ max_w.weight|floatformat:1 }}{% else %}—{% endif %}
+                    {% endwith %}
+                </p>
+                <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter">Макс. вес</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if workout.sets.exists %}
+        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Упражнения</h3>
+        <div class="space-y-2">
+            {% for set in workout.sets.all %}
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50/50 dark:bg-dark-700/30 border border-gray-100 dark:border-gray-700/50 p-3 sm:p-4 rounded-xl hover:border-brand-200 dark:hover:border-brand-700 transition-colors gap-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-1.5 h-1.5 rounded-full bg-brand-500 shrink-0"></div>
+                    <div>
+                        <span class="text-sm sm:text-base font-bold text-gray-800 dark:text-gray-100">{{ set.exercise.name }}</span>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 ml-1 uppercase font-bold">{{ set.exercise.get_muscle_group_display }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 self-end sm:self-auto">
+                    <span class="text-xs font-black text-gray-500 dark:text-gray-400 bg-white dark:bg-dark-700 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-600 shadow-sm">{{ set.sets }} × {{ set.reps }}</span>
+                    {% if set.is_bodyweight %}
+                    <span class="text-xs font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 px-2 py-1 rounded-lg border border-brand-100 dark:border-brand-800">BW</span>
+                    {% else %}
+                    <span class="text-xs font-black text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800">{{ set.weight|default:"0" }} кг</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if workout.cardio_entries.exists %}
+        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mt-6 mb-4">Кардио</h3>
+        <div class="space-y-2">
+            {% for cardio in workout.cardio_entries.all %}
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/30 p-3 sm:p-4 rounded-xl hover:border-emerald-200 dark:hover:border-emerald-700 transition-colors gap-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></div>
+                    <div>
+                        <span class="text-sm sm:text-base font-bold text-gray-800 dark:text-gray-100">{{ cardio.get_activity_display }}</span>
+                        {% if cardio.notes %}
+                        <p class="text-[10px] text-gray-400 dark:text-gray-500 leading-tight italic">{{ cardio.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5 self-end sm:self-auto">
+                    <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-dark-700 px-2 py-1 rounded-lg border border-emerald-100 dark:border-emerald-800/40 shadow-sm">{{ cardio.duration_minutes }} м</span>
+                    {% if cardio.distance_km %}
+                    <span class="text-xs font-black text-orange-600 dark:text-orange-400 bg-white dark:bg-dark-700 px-2 py-1 rounded-lg border border-orange-100 dark:border-orange-800/40 shadow-sm">{{ cardio.distance_km }} км</span>
+                    {% endif %}
+                    {% if cardio.avg_heart_rate %}
+                    <span class="text-[10px] font-black text-rose-600 dark:text-rose-400 bg-white dark:bg-dark-700 px-1.5 py-1 rounded-lg border border-rose-100 dark:border-rose-800/40 shadow-sm">♥ {{ cardio.avg_heart_rate }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Модальное окно для сохранения шаблона -->
+    <div id="template-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-dark-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-dark-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 w-full max-w-md p-8 transform scale-95 transition-transform duration-300">
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2">Создать шаблон</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Введите название для нового шаблона тренировки.</p>
+            
+            <form action="{% url 'save_as_template' workout.pk %}" method="POST">
+                {% csrf_token %}
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Название шаблона</label>
+                    <input type="text" name="template_name" value="Тренировка {{ workout.date|date:'d.m.Y' }}" required
+                        class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all font-medium text-gray-800 dark:text-gray-200">
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeTemplateModal()" class="px-6 py-3 rounded-xl text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700 transition">Отмена</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 transition shadow-lg shadow-brand-500/30">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showTemplateModal() {
+            const modal = document.getElementById('template-modal');
+            const modalBox = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            modalBox.classList.remove('scale-95');
+        }
+
+        function closeTemplateModal() {
+            const modal = document.getElementById('template-modal');
+            const modalBox = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            modalBox.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+    </script>
+</div>
+{% endblock %}
