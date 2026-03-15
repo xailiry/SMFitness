@@ -41,6 +41,7 @@
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/fitness_charts.js' %}"></script>
     <!-- Intro.js for Interactive Tutorials -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
@@ -185,12 +186,30 @@
                         class="hidden sm:block text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 font-medium px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all">Журнал</a>
                     <a href="{% url 'statistics' %}"
                         class="hidden sm:block text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 font-medium px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all">Аналитика</a>
-                    <a href="{% url 'ai_journal' %}" id="nav-ai-button"
-                        class="hidden sm:block text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium px-3 py-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all flex items-center gap-1.5"><svg
-                            class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>ИИ</a>
+                    <!-- AI Dropdown -->
+                    <div class="relative group hidden sm:block">
+                        <button class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all">
+                            <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c.5 6 5.5 11 11.5 11.5-6 .5-11 5.5-11.5 11.5-.5-6-5.5-11-11.5-11.5 6-.5 11-5.5 11.5-11.5z"></path></svg>
+                            <span>ИИ</span>
+                            <svg class="w-3.5 h-3.5 opacity-50 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                            {% if not user.ai_strategy %}
+                            <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                               <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                            </span>
+                            {% endif %}
+                        </button>
+                        <div class="absolute right-0 mt-1 w-48 py-2 bg-white dark:bg-dark-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right scale-95 group-hover:scale-100 z-[60]">
+                            <a href="{% url 'ai_strategy' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>Стратегия</span>
+                            </a>
+                            <a href="{% url 'ai_journal' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <span>Советы ИИ</span>
+                            </a>
+                        </div>
+                    </div>
                     <a href="{% url 'profile' %}"
                         class="hidden sm:flex items-center gap-2 group px-2 py-1.5 rounded-xl hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all border border-transparent hover:border-brand-100 dark:hover:border-brand-800/50">
                         <div class="w-8 h-8 rounded-lg overflow-hidden border border-brand-200 dark:border-brand-800 shadow-sm transition-transform group-hover:scale-105">
@@ -279,13 +298,17 @@
                 </svg>
                 <span class="text-[10px] font-medium">Графики</span>
             </a>
-            <a href="{% url 'ai_journal' %}"
-                class="flex flex-col items-center gap-0.5 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-                <span class="text-[10px] font-medium">ИИ</span>
+            <a href="{% url 'ai_strategy' %}"
+                class="flex flex-col items-center gap-0.5 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1">
+                <div class="relative">
+                    <svg class="w-5 h-5 mx-auto text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c.5 6 5.5 11 11.5 11.5-6 .5-11 5.5-11.5 11.5-.5-6-5.5-11-11.5-11.5 6-.5 11-5.5 11.5-11.5z"></path>
+                    </svg>
+                    {% if not user.ai_strategy %}
+                    <span class="absolute -top-1 -right-1 h-2 w-2 bg-purple-500 rounded-full border-2 border-white dark:border-dark-900"></span>
+                    {% endif %}
+                </div>
+                <span class="text-[10px] font-bold">ИИ Раздел</span>
             </a>
             <a href="{% url 'profile' %}"
                 class="flex flex-col items-center gap-0.5 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors p-1">
@@ -459,5 +482,6 @@
             }, 4000);
         }
     </script>
+    {% block extra_body %}{% endblock %}
 </body>
 </html>

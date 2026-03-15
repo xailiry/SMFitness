@@ -32,6 +32,14 @@
 
 {% if show_charts %}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Динамика веса тела -->
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+        <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">⚖️ Динамика веса тела</h3>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Изменение вашего веса (кг) со временем</p>
+        <div class="relative h-[280px]"><canvas id="bodyWeightChart"></canvas></div>
+        <div id="noBodyWeightData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных о весе</p></div>
+    </div>
+
     <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
         <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">📈 Прогресс рабочих весов</h3>
         <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Максимальный вес по дням для выбранного упражнения</p>
@@ -158,40 +166,20 @@
 {% endif %}
 
 <script>
-const isDark = document.documentElement.classList.contains('dark');
-Chart.defaults.font.family = 'Outfit, Inter, sans-serif';
-Chart.defaults.color = isDark ? '#9ca3af' : '#64748b';
-const gridColor = isDark ? '#334155' : '#f1f5f9';
-const COLORS = [
-    '#3b82f6', // blue
-    '#10b981', // emerald
-    '#8b5cf6', // violet
-    '#f59e0b', // amber
-    '#ef4444', // red
-    '#06b6d4', // cyan
-    '#ec4899', // pink
-    '#f97316', // orange
-    '#6366f1'  // indigo
-];
-const GRADIENTS = [
-    ['#3b82f6', '#2563eb'],
-    ['#10b981', '#059669'],
-    ['#8b5cf6', '#7c3aed'],
-    ['#f59e0b', '#d97706'],
-    ['#ef4444', '#dc2626'],
-    ['#06b6d4', '#0891b2'],
-    ['#ec4899', '#db2777'],
-    ['#f97316', '#ea580c'],
-    ['#6366f1', '#4f46e5']
-];
+const isDark = getIsDark();
+const gridColor = initChartDefaults();
+const COLORS = CHART_COLORS;
+const GRADIENTS = CHART_GRADIENTS;
 
 // Data from backend
 const rawSets = JSON.parse('{{ raw_sets_json|escapejs }}');
 const rawCardio = JSON.parse('{{ raw_cardio_json|escapejs }}');
+const rawWeight = JSON.parse('{{ raw_weight_json|escapejs }}');
 
 // Chart instances
 let charts = {
     weight: null,
+    bodyWeight: null,
     volume: null,
     freq: null,
     muscle: null,
@@ -201,24 +189,6 @@ let charts = {
 
 let currentExercise = "";
 let currentPeriod = 'all';
-
-function getWeekString(dateStr) {
-    const d = new Date(dateStr);
-    const day = d.getDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - day);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    const weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-    return `${d.getUTCFullYear()}-W${weekNo < 10 ? '0'+weekNo : weekNo}`;
-}
-
-function getReadableWeek(dateStr, weekNum) {
-    const d = new Date(dateStr);
-    const day = d.getDay() || 7;
-    const start = new Date(d);
-    start.setDate(d.getDate() - day + 1);
-    const options = { month: 'short', day: 'numeric' };
-    return `Нед ${weekNum} (${start.toLocaleDateString('ru-RU', options)})`;
-}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -345,12 +315,78 @@ function updateCharts() {
     const cutoff = getCutoffDate();
     const filteredSets = cutoff ? rawSets.filter(s => new Date(s.d) >= cutoff) : rawSets;
     const filteredCardio = cutoff ? rawCardio.filter(c => new Date(c.d) >= cutoff) : rawCardio;
+    const filteredWeight = cutoff ? rawWeight.filter(w => new Date(w.d) >= cutoff) : rawWeight;
 
     renderWeightChart(filteredSets);
+    renderBodyWeightChart(filteredWeight);
     renderVolumeChart(filteredSets);
     renderFreqChart(filteredSets);
     renderMuscleChart(filteredSets);
     renderCardioCharts(filteredCardio);
+}
+
+function renderBodyWeightChart(weightData) {
+    const chartCanvas = document.getElementById('bodyWeightChart');
+    const noDataDiv = document.getElementById('noBodyWeightData');
+    const container = chartCanvas?.parentElement;
+    if (!chartCanvas || !noDataDiv || !container) return;
+
+    if (weightData.length === 0) {
+        if (charts.bodyWeight) charts.bodyWeight.destroy();
+        noDataDiv.classList.remove('hidden');
+        container.classList.add('hidden');
+        return;
+    }
+    noDataDiv.classList.add('hidden');
+    container.classList.remove('hidden');
+
+    const ctx = chartCanvas.getContext('2d');
+    if (!ctx) return;
+
+    const dates = weightData.map(w => w.d);
+    const values = weightData.map(w => w.w);
+    
+    if (charts.bodyWeight) charts.bodyWeight.destroy();
+    const g = ctx.createLinearGradient(0, 0, 0, 300);
+    g.addColorStop(0, 'rgba(16,185,129,0.3)');
+    g.addColorStop(1, 'rgba(16,185,129,0)');
+    
+    charts.bodyWeight = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'вес (кг)',
+                data: values,
+                borderColor: '#10b981',
+                backgroundColor: g,
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: isDark ? '#1e293b' : '#fff'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { 
+                legend: { display: false },
+                tooltip: getCommonTooltipConfig(isDark)
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: false,
+                    grid: { color: gridColor, borderDash: [6, 6], drawBorder: false },
+                    ticks: { font: { family: 'Outfit', size: 11 }, padding: 10 }
+                }, 
+                x: { 
+                    grid: { display: false },
+                    ticks: { font: { family: 'Outfit', size: 11 }, padding: 10 }
+                } 
+            }
+        }
+    });
 }
 
 function renderWeightChart(sets) {
@@ -406,18 +442,7 @@ function renderWeightChart(sets) {
             interaction: { intersect: false, mode: 'index' },
             plugins: { 
                 legend: { display: false },
-                tooltip: {
-                    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-                    titleColor: isDark ? '#f8fafc' : '#1e293b',
-                    bodyColor: isDark ? '#94a3b8' : '#64748b',
-                    borderColor: isDark ? '#334155' : '#e2e8f0',
-                    borderWidth: 1,
-                    padding: 12,
-                    boxPadding: 6,
-                    usePointStyle: true,
-                    titleFont: { size: 14, weight: 'bold', family: 'Outfit' },
-                    bodyFont: { size: 13, family: 'Outfit' }
-                }
+                tooltip: getCommonTooltipConfig(isDark)
             },
             scales: { 
                 y: { 

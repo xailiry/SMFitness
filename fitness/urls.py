@@ -20,7 +20,12 @@ urlpatterns = [
     path('template/<int:pk>/', views.template_detail, name='template_detail'),
     path('api/ai-recommendation/', views.get_ai_recommendation, name='get_ai_recommendation'),
     path('ai-journal/', views.ai_journal, name='ai_journal'),
+    path('ai-strategy/', views.ai_strategy, name='ai_strategy'),
+    path('generate-strategy/', views.generate_strategy, name='generate_strategy'),
     path('onboarding/', views.onboarding_view, name='onboarding'),
     path('archive/', views.workout_archive, name='workout_archive'),
     path('api/archive/<int:year>/<int:week>/', views.api_get_workouts_by_week, name='api_archive_week'),
+    path('update-dashboard-layout/', views.update_dashboard_layout, name='update_dashboard_layout'),
+    path('reset-dashboard-layout/', views.reset_dashboard_layout, name='reset_dashboard_layout'),
+    path('dismiss-plateau/', views.dismiss_plateau, name='dismiss_plateau'),
 ]

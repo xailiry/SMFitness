@@ -21,8 +21,13 @@ class WorkoutForm(forms.ModelForm):
 
     class Meta:
         model = Workout
-        fields = ['date', 'notes']
+        fields = ['date', 'body_weight', 'notes']
         widgets = {
+            'body_weight': forms.NumberInput(attrs={
+                'class': 'w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-800 dark:text-gray-200',
+                'placeholder': 'Вес (кг)',
+                'step': '0.1',
+            }),
             'notes': forms.Textarea(attrs={
                 'class': 'w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-5 py-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none min-h-[100px] text-gray-800 dark:text-gray-200',
                 'placeholder': 'Как прошло занятие? Какое было самочувствие?',
@@ -112,7 +117,7 @@ class WorkoutSetForm(forms.ModelForm):
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['height', 'current_weight', 'target_weight', 'goal', 'avatar']
+        fields = ['height', 'current_weight', 'target_weight', 'goal', 'gender', 'birth_date', 'activity_level', 'avatar']
         widgets = {
             'height': forms.NumberInput(attrs={
                 'class': 'w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-800 dark:text-gray-200',
@@ -133,6 +138,19 @@ class UserProfileForm(forms.ModelForm):
                 'min': 30,
             }),
             'goal': forms.Select(attrs={
+                'class': 'w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-800 dark:text-gray-200',
+            }),
+            'gender': forms.Select(attrs={
+                'class': 'w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-800 dark:text-gray-200',
+            }),
+            'birth_date': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'class': 'w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-800 dark:text-gray-200',
+                    'type': 'date',
+                }
+            ),
+            'activity_level': forms.Select(attrs={
                 'class': 'w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-800 dark:text-gray-200',
             }),
             'avatar': forms.FileInput(attrs={

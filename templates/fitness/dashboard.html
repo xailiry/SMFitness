@@ -2,12 +2,283 @@
 
 {% block title %}Журнал тренировок - SMFitness{% endblock %}
 
+{% block extra_body %}
+
+
+<!-- Widget Library Modal -->
+<div id="widget-library-modal" class="fixed inset-0 z-[9999] hidden">
+    <div class="absolute inset-0 bg-dark-950/60 backdrop-blur-sm"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+        <div class="bg-white dark:bg-dark-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-scale-in">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white">Библиотека виджетов</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Выберите, что отображать на дашборде</p>
+                </div>
+                <button id="close-widget-library" class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar space-y-3" id="widget-list">
+                <!-- Widgets will be listed here -->
+            </div>
+            <div class="p-6 bg-gray-50 dark:bg-dark-900/50 flex justify-between items-center gap-4">
+                <button id="reset-dashboard" class="text-xs font-bold text-gray-400 hover:text-rose-500 transition-colors uppercase tracking-widest">
+                    Сбросить всё
+                </button>
+                <button id="apply-widgets" class="bg-brand-600 text-white px-6 py-2.5 rounded-2xl font-bold shadow-lg shadow-brand-500/20 hover:scale-105 transition-all">
+                    Готово
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{{ layout|json_script:"dashboard-layout" }}
+
+<script>
+    // === DASHBOARD PERSONALIZATION ===
+    const isEditMode = { active: false };
+    const toggleEditBtn = document.getElementById('toggle-edit-mode');
+    const openLibraryBtn = document.getElementById('open-widget-library');
+    const libraryModal = document.getElementById('widget-library-modal');
+    const closeLibraryBtn = document.getElementById('close-widget-library');
+    const applyWidgetsBtn = document.getElementById('apply-widgets');
+    const resetWidgetsBtn = document.getElementById('reset-dashboard');
+    const widgetListContainer = document.getElementById('widget-list');
+    
+    const WIDGET_LABELS = {
+        'total_workouts': 'Всего тренировок',
+        'total_volume': 'Общий объём',
+        'streak': 'Серия тренировок',
+        'best_lift': 'Лучший результат',
+        'insights': 'Инсайты недели',
+        'weight_goal': 'Цель по весу',
+        'bmi': 'Индекс массы тела (ИМТ)',
+        'macros_card': 'Цели питания (Макросы)',
+        'cardio_card': 'Сводка кардио',
+        'daily_quote': 'Мотивация на день',
+        'progress_chart': 'График прогресса'
+    };
+
+    let currentLayout = { hidden: [], top_row: [], sidebar: [] };
+    const layoutEl = document.getElementById('dashboard-layout');
+    if (layoutEl) {
+        try {
+            currentLayout = JSON.parse(layoutEl.textContent);
+        } catch(e) {
+            console.error("Error parsing dashboard layout", e);
+        }
+    }
+
+    function renderWidgetLibrary() {
+        if (!widgetListContainer) return;
+        widgetListContainer.innerHTML = '';
+        Object.keys(WIDGET_LABELS).forEach(id => {
+            const item = document.createElement('div');
+            const isVisible = !currentLayout.hidden.includes(id);
+            item.className = 'flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-dark-900/40 border border-gray-100 dark:border-gray-700/50';
+            item.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full ${isVisible ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}"></div>
+                    <span class="font-bold text-sm ${isVisible ? 'text-gray-900 dark:text-white' : 'text-gray-400'}">${WIDGET_LABELS[id]}</span>
+                </div>
+                <button class="toggle-widget-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all ${isVisible ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'}" data-id="${id}">
+                    ${isVisible ? 'Скрыть' : 'Показать'}
+                </button>
+            `;
+            widgetListContainer.appendChild(item);
+        });
+
+        document.querySelectorAll('.toggle-widget-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                if (currentLayout.hidden.includes(id)) {
+                    currentLayout.hidden = currentLayout.hidden.filter(wid => wid !== id);
+                } else {
+                    currentLayout.hidden.push(id);
+                }
+                renderWidgetLibrary();
+            });
+        });
+    }
+
+    if (openLibraryBtn) {
+        openLibraryBtn.addEventListener('click', () => {
+            renderWidgetLibrary();
+            libraryModal.classList.remove('hidden');
+        });
+    }
+
+    if (closeLibraryBtn) closeLibraryBtn.addEventListener('click', () => libraryModal.classList.add('hidden'));
+    
+    if (applyWidgetsBtn) {
+        applyWidgetsBtn.addEventListener('click', () => {
+            libraryModal.classList.add('hidden');
+            saveLayout(true);
+        });
+    }
+
+    if (resetWidgetsBtn) {
+        resetWidgetsBtn.addEventListener('click', () => {
+            if (confirm('Сбросить все настройки дашборда?')) {
+                fetch("{% url 'reset_dashboard_layout' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                }).then(() => location.reload());
+            }
+        });
+    }
+
+    const topRowContainer = document.getElementById('tour-stats');
+    const sidebarContainer = document.getElementById('dashboard-sidebar');
+    
+    function applySavedLayout() {
+        if (!currentLayout) return;
+
+        const containers = {
+            'top_row': topRowContainer,
+            'sidebar': sidebarContainer
+        };
+
+        Object.keys(containers).forEach(key => {
+            const container = containers[key];
+            const order = currentLayout[key];
+            if (order && container) {
+                order.forEach(wid => {
+                    const el = document.querySelector(`[data-widget-id="${wid}"]`);
+                    if (el && wid !== 'insights') { // Don't move insights into stats grid
+                        container.appendChild(el);
+                        if (currentLayout.hidden.includes(wid)) {
+                            el.style.display = 'none';
+                        } else {
+                            el.style.display = '';
+                        }
+                    }
+                });
+            }
+        });
+
+        // Handle visibility for all widgets including fixed ones like insights
+        const allWidgets = document.querySelectorAll('[data-widget-id]');
+        allWidgets.forEach(el => {
+            const wid = el.getAttribute('data-widget-id');
+            if (currentLayout.hidden.includes(wid)) {
+                el.style.display = 'none';
+            } else if (wid === 'insights' || !currentLayout.hidden.includes(wid)) {
+                // Ensure insights is shown if not hidden
+                 el.style.display = '';
+            }
+        });
+    }
+
+    let topSortable, sidebarSortable;
+
+    function initSortable() {
+        if (topSortable) topSortable.destroy();
+        if (sidebarSortable) sidebarSortable.destroy();
+
+        const options = {
+            animation: 150,
+            disabled: !isEditMode.active,
+            ghostClass: 'opacity-50',
+            dragClass: 'sortable-drag',
+            handle: '.widget-drag-handle',
+            group: 'dashboard-group',
+            onEnd: () => saveLayout(false)
+        };
+
+        if (topRowContainer) topSortable = new Sortable(topRowContainer, options);
+        if (sidebarContainer) sidebarSortable = new Sortable(sidebarContainer, options);
+    }
+
+    function saveLayout(shouldReload) {
+        if (!topRowContainer || !sidebarContainer) return;
+        
+        const layout = {
+            top_row: Array.from(topRowContainer.children).map(c => c.getAttribute('data-widget-id')).filter(Boolean),
+            sidebar: Array.from(sidebarContainer.children).map(c => c.getAttribute('data-widget-id')).filter(Boolean),
+            hidden: currentLayout.hidden
+        };
+
+        fetch("{% url 'update_dashboard_layout' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ layout: layout })
+        }).then(res => res.json()).then(data => {
+            if (shouldReload) location.reload();
+        });
+    }
+
+    if (toggleEditBtn) {
+        toggleEditBtn.addEventListener('click', () => {
+            isEditMode.active = !isEditMode.active;
+            document.body.classList.toggle('dashboard-edit-mode', isEditMode.active);
+            openLibraryBtn.classList.toggle('hidden', !isEditMode.active);
+            
+            const btnText = toggleEditBtn.querySelector('span');
+            if (isEditMode.active) {
+                btnText.textContent = 'Готово';
+                toggleEditBtn.classList.add('bg-brand-600', 'text-white', 'border-brand-500');
+                toggleEditBtn.classList.remove('bg-white/70', 'dark:bg-dark-800/70', 'text-gray-600', 'dark:text-gray-300');
+            } else {
+                btnText.textContent = 'Редактировать панель';
+                toggleEditBtn.classList.remove('bg-brand-600', 'text-white', 'border-brand-500');
+                toggleEditBtn.classList.add('bg-white/70', 'dark:bg-dark-800/70', 'text-gray-600', 'dark:text-gray-300');
+                location.reload(); 
+            }
+
+            document.querySelectorAll('.widget-drag-handle').forEach(h => {
+                h.classList.toggle('hidden', !isEditMode.active);
+            });
+
+            initSortable();
+        });
+    }
+
+    applySavedLayout();
+    document.querySelectorAll('.widget-drag-handle').forEach(h => h.classList.add('hidden'));
+    initSortable();
+</script>
+{% endblock %}
+
 {% block content %}
-<!-- Stats Cards Row -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    {% if plateau_message %}
+    <div id="plateau-banner" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 rounded-2xl flex items-start gap-4 animate-slide-up mb-6 relative group">
+        <div class="bg-amber-100 dark:bg-amber-900/40 p-2 rounded-xl text-amber-600 dark:text-amber-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div class="flex-1">
+            <h4 class="font-bold text-amber-800 dark:text-amber-300 text-sm">Обнаружено плато</h4>
+            <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-relaxed">{{ plateau_message }}</p>
+        </div>
+        <button id="dismiss-plateau-btn" class="p-1 hover:bg-amber-200/50 dark:hover:bg-amber-800/50 rounded-lg transition-colors text-amber-500">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+    <script>
+        document.getElementById('dismiss-plateau-btn')?.addEventListener('click', function() {
+            fetch("{% url 'dismiss_plateau' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            }).then(() => {
+                document.getElementById('plateau-banner').style.display = 'none';
+            });
+        });
+    </script>
+    {% endif %}
+
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="tour-stats"
     data-intro="Здесь отображается ваша общая статистика тренировок, объём, серия и рекорды." data-step="1">
-    <div
-        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+    <div data-widget-id="total_workouts"
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm relative group">
+        <div class="widget-drag-handle hidden absolute top-1 right-1 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </div>
         <div class="flex items-center gap-3 mb-3">
             <div
                 class="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400">
@@ -21,8 +292,11 @@
         <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ total_workouts }}</p>
         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Всего тренировок</p>
     </div>
-    <div
-        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+    <div data-widget-id="total_volume"
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm relative group">
+        <div class="widget-drag-handle hidden absolute top-1 right-1 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </div>
         <div class="flex items-center gap-3 mb-3">
             <div
                 class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -35,8 +309,11 @@
         <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ total_volume_tons }} т</p>
         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Общий объём</p>
     </div>
-    <div
-        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+    <div data-widget-id="streak"
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm relative group">
+        <div class="widget-drag-handle hidden absolute top-1 right-1 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </div>
         <div class="flex items-center gap-3 mb-3">
             <div
                 class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -52,8 +329,11 @@
         <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ streak }} нед.</p>
         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Серия тренировок</p>
     </div>
-    <div
-        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm">
+    <div data-widget-id="best_lift"
+        class="stat-card bg-white/70 dark:bg-dark-800/70 backdrop-blur-md rounded-2xl p-5 border border-white/60 dark:border-gray-700/40 shadow-sm relative group">
+        <div class="widget-drag-handle hidden absolute top-1 right-1 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </div>
         <div class="flex items-center gap-3 mb-3">
             <div
                 class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
@@ -77,13 +357,30 @@
 
 
 {% if insights %}
-<div id="insights-section" class="mb-8 animate-slide-up-delay">
+<div id="insights-section" data-widget-id="insights" class="mb-8 animate-slide-up-delay relative group">
+    <div class="widget-drag-handle hidden absolute top-0 right-0 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </div>
     <div class="flex items-center gap-2 mb-4">
         <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
         <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Инсайты недели</h3>
     </div>
     <div id="insights-carousel" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scroll-smooth">
         {% for insight in insights %}
+        {% if insight.link %}
+        <a href="{{ insight.link }}" class="flex-none w-[280px] sm:w-[320px] snap-center bg-white/60 dark:bg-dark-800/60 backdrop-blur-md rounded-2xl p-5 border border-brand-100/30 dark:border-brand-900/40 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-brand-500/5 rounded-full group-hover:scale-120 transition-transform"></div>
+            <div class="flex gap-4 relative z-10">
+                <div class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                    {{ insight.icon }}
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 leading-snug">{{ insight.text }}</p>
+                    <p class="text-[10px] font-black text-brand-500 dark:text-brand-400 uppercase tracking-widest mt-2 flex items-center gap-1">Попробовать <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></p>
+                </div>
+            </div>
+        </a>
+        {% else %}
         <div class="flex-none w-[280px] sm:w-[320px] snap-center bg-white/60 dark:bg-dark-800/60 backdrop-blur-md rounded-2xl p-5 border border-brand-100/30 dark:border-brand-900/40 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
             <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-brand-500/5 rounded-full group-hover:scale-120 transition-transform"></div>
             <div class="flex gap-4 relative z-10">
@@ -95,6 +392,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 </div>
@@ -149,7 +447,10 @@
     });
 </script>
 {% else %}
-<div id="insights-section" class="mb-8 animate-slide-up-delay">
+<div id="insights-section" data-widget-id="insights" class="mb-8 animate-slide-up-delay relative group">
+    <div class="widget-drag-handle hidden absolute top-0 right-0 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </div>
     <div class="flex items-center gap-2 mb-4">
         <div class="w-1.5 h-6 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
         <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest opacity-50">Инсайты недели</h3>
@@ -166,11 +467,14 @@
 
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
     <!-- Sidebar Widgets (Right on Desktop, Top on Mobile) -->
-    <div class="space-y-6 order-1 xl:order-2">
+    <div id="dashboard-sidebar" class="space-y-6 order-1 xl:order-2 min-h-[100px]">
         <!-- Weight Goal Card -->
         {% if weight_diff is not None %}
-        <div id="tour-weight-goal" 
+        <div id="tour-weight-goal" data-widget-id="weight_goal"
              class="bg-gradient-to-br from-indigo-600 to-violet-700 p-5 rounded-2xl shadow-xl text-white border border-indigo-400/30 relative overflow-hidden group">
+            <div class="widget-drag-handle hidden absolute top-2 right-2 p-1 bg-white/20 rounded-md cursor-grab z-20">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
             <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
             <div class="relative z-10 flex items-center justify-between">
                 <div>
@@ -194,14 +498,47 @@
                 <div class="absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-1000" style="width: {{ weight_progress_pct }}%"></div>
             </div>
             {% endif %}
+
+            {% if prediction_date and not weight_goal_reached %}
+            <div class="mt-4 pt-3 border-t border-white/10">
+                <p class="text-[9px] text-indigo-100/60 uppercase font-black tracking-widest text-center">Прогноз достижения</p>
+                <p class="text-center font-bold text-sm text-white mt-0.5">~ {{ prediction_date|date:"d E Y" }}</p>
+            </div>
+            {% endif %}
         </div>
+        {% endif %}
+
+        {% if not ai_strategy %}
+        <!-- AI Strategy Promo -->
+        <a href="{% url 'ai_strategy' %}" data-widget-id="ai_strategy_promo"
+             class="block bg-gradient-to-br from-brand-600 to-indigo-700 p-5 rounded-2xl shadow-xl text-white border border-brand-400/30 relative overflow-hidden group hover:scale-[1.02] transition-all">
+            <div class="widget-drag-handle hidden absolute top-2 right-2 p-1 bg-white/20 rounded-md cursor-grab z-20">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+            <div class="relative z-10 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xs font-bold text-brand-100 uppercase tracking-widest mb-1 opacity-80">Эксклюзивно</h3>
+                    <p class="text-xl font-black mb-0.5 leading-tight">Ваш план<br>питания от ИИ</p>
+                    <span class="text-[10px] font-bold text-brand-100/70 py-1 px-2 bg-white/10 rounded-lg backdrop-blur-sm mt-2 inline-block">ОТКРЫТЬ 🚀</span>
+                </div>
+                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
+                    <svg class="w-8 h-8 text-white animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c.5 6 5.5 11 11.5 11.5-6 .5-11 5.5-11.5 11.5-.5-6-5.5-11-11.5-11.5 6-.5 11-5.5 11.5-11.5z"></path>
+                    </svg>
+                </div>
+            </div>
+        </a>
         {% endif %}
 
         <!-- BMI Box -->
         <div id="tour-bmi" data-intro="Здесь будет рассчитан ваш Индекс массы тела на основе данных из профиля."
             data-step="3"
-            class="relative overflow-hidden p-6 rounded-2xl shadow-xl text-white border transition-all duration-500"
+            class="relative overflow-hidden p-6 rounded-2xl shadow-xl text-white border transition-all duration-500" data-widget-id="bmi"
             style="{% if bmi_hue is not None %}background: linear-gradient(135deg, hsl({{ bmi_hue }}, 60%, 42%), hsl({{ bmi_hue }}, 75%, 30%)); border-color: hsla({{ bmi_hue }}, 60%, 50%, 0.4);{% else %}background: linear-gradient(135deg, #059669, #065f46); border-color: rgba(16,185,129,0.5);{% endif %}">
+            <div class="widget-drag-handle hidden absolute top-2 right-2 p-1 bg-white/20 rounded-md cursor-grab z-20">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
             <div
                 class="absolute -top-10 -right-10 w-28 h-28 rounded-full mix-blend-screen opacity-10 blur-xl"
                 style="{% if bmi_hue is not None %}background-color: hsl({{ bmi_hue }}, 65%, 65%);{% else %}background-color: #34d399;{% endif %}">
@@ -215,6 +552,7 @@
                     <h3 class="text-sm font-bold text-emerald-100 uppercase tracking-wider mb-1">Ваш ИМТ</h3>
                     {% if bmi %}
                     <p class="text-4xl font-black mt-1">{{ bmi }}</p>
+                    <p class="text-[10px] font-bold text-emerald-100/70 uppercase tracking-widest mt-1">{{ bmi_category }}</p>
                     {% else %}
                     <p class="text-base font-bold text-emerald-100/90 mt-2">Заполните данные профиля</p>
                     {% endif %}
@@ -230,8 +568,49 @@
             </div>
         </div>
 
+        <!-- Macros Card (New) -->
+        {% if macros %}
+        <div data-widget-id="macros_card" class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-5 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40 relative overflow-hidden group">
+            <div class="widget-drag-handle hidden absolute top-2 right-2 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
+            <div class="absolute -right-4 -top-4 w-20 h-20 bg-brand-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Цели питания</h3>
+                <div class="flex items-center gap-1 text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full">
+                    <span class="animate-pulse">●</span> LIVE
+                </div>
+            </div>
+            
+            <div class="text-center mb-5">
+                <p class="text-3xl font-black text-gray-900 dark:text-white">{{ macros.calories }}</p>
+                <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">Ккал в день</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-orange-50 dark:bg-orange-900/20 p-2.5 rounded-xl border border-orange-100 dark:border-orange-800/30 text-center">
+                    <p class="text-base font-black text-orange-600 dark:text-orange-400">{{ macros.protein }}г</p>
+                    <p class="text-[9px] font-bold text-orange-500/70 uppercase">Белки</p>
+                </div>
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-800/30 text-center">
+                    <p class="text-base font-black text-emerald-600 dark:text-emerald-400">{{ macros.fats }}г</p>
+                    <p class="text-[9px] font-bold text-emerald-500/70 uppercase">Жиры</p>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-2.5 rounded-xl border border-blue-100 dark:border-blue-800/30 text-center">
+                    <p class="text-base font-black text-blue-600 dark:text-blue-400">{{ macros.carbs }}г</p>
+                    <p class="text-[9px] font-bold text-blue-500/70 uppercase">Углеводы</p>
+                </div>
+            </div>
+            
+            <a href="{% url 'ai_strategy' %}" class="block w-full mt-4 py-2 bg-gray-50 dark:bg-dark-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 rounded-xl text-[10px] font-bold text-gray-500 dark:text-gray-400 hover:text-brand-600 text-center transition-all border border-gray-100 dark:border-gray-600">Подробный план →</a>
+        </div>
+        {% endif %}
+
         <!-- Cardio Summary Card -->
-        <div class="bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400 p-5 rounded-2xl shadow-xl text-white border border-rose-400/50 relative overflow-hidden">
+        <div data-widget-id="cardio_card" class="bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400 p-5 rounded-2xl shadow-xl text-white border border-rose-400/50 relative overflow-hidden">
+            <div class="widget-drag-handle hidden absolute top-2 right-2 p-1 bg-white/20 rounded-md cursor-grab z-20">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
             <div class="absolute -top-8 -right-8 w-24 h-24 bg-rose-300 rounded-full mix-blend-screen opacity-20 blur-xl"></div>
             <div class="relative z-10 flex items-center justify-between">
                 <div>
@@ -250,8 +629,11 @@
         </div>
 
         <!-- Quote -->
-        <div
+        <div data-widget-id="daily_quote"
             class="bg-indigo-50/80 dark:bg-indigo-900/20 backdrop-blur-xl p-5 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-800/40 relative">
+            <div class="widget-drag-handle hidden absolute top-2 right-2 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
             <svg class="w-6 h-6 text-indigo-400/30 dark:text-indigo-400/20 absolute top-3 left-3" fill="currentColor"
                 viewBox="0 0 24 24">
                 <path
@@ -265,9 +647,11 @@
         </div>
 
         <!-- Multi-Chart Card -->
-        <div id="tour-chart" data-intro="График прогресса рабочих весов. Выберите упражнение, чтобы увидеть свой рост!"
-            data-step="4"
-            class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
+        <div id="tour-chart" data-widget-id="progress_chart"
+            class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40 relative">
+            <div class="widget-drag-handle hidden absolute top-2 right-2 p-1 bg-white/80 dark:bg-dark-700/80 rounded-md shadow-sm cursor-grab z-20">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
             {% if show_charts %}
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-extrabold text-gray-900 dark:text-white" id="dashboard-chart-title">Прогресс весов</h3>
@@ -291,6 +675,10 @@
                     <!-- Выпадающее меню типов графиков -->
                     <div id="chart-type-options" class="hidden absolute z-50 w-full mt-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden animate-slide-up-sm">
                         <div class="p-1.5 space-y-0.5">
+                            <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="body_weight" data-icon="⚖️">
+                                <span class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">⚖️</span>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Динамика веса тела</span>
+                            </div>
                             <div class="chart-type-option group flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="weight" data-icon="📈">
                                 <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">📈</span>
                                 <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Прогресс весов</span>
@@ -387,15 +775,25 @@
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Ваш тренировочный журнал</p>
             </div>
-            <a id="tour-add"
-                data-intro="Здесь вы можете добавить новую тренировку. Попробуйте нажать после окончания обучения!"
-                data-step="2" href="{% url 'add_workout' %}"
-                class="flex items-center gap-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-md shadow-brand-500/20 hover:shadow-lg transition-all active:scale-95">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Добавить
-            </a>
+            <div class="flex items-center gap-2">
+                <button id="open-widget-library" class="hidden flex items-center gap-1.5 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 px-4 py-2 rounded-full font-bold text-sm shadow-sm border border-brand-100 dark:border-brand-800/40 hover:bg-brand-100 transition-all active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span>Библиотека</span>
+                </button>
+                <button id="toggle-edit-mode" class="flex items-center gap-1.5 bg-white/70 dark:bg-dark-800/70 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-full font-bold text-sm shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-white transition-all active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    <span>Редактировать панель</span>
+                </button>
+                <a id="tour-add"
+                    data-intro="Здесь вы можете добавить новую тренировку. Попробуйте нажать после окончания обучения!"
+                    data-step="2" href="{% url 'add_workout' %}"
+                    class="flex items-center gap-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-md shadow-brand-500/20 hover:shadow-lg transition-all active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Добавить
+                </a>
+            </div>
         </div>
 
         {% if workouts %}
@@ -558,12 +956,15 @@
 
     const rawSetsJson = '{{ raw_sets_json|escapejs }}';
     const rawCardioJson = '{{ raw_cardio_json|escapejs }}';
+    const rawWeightJson = '{{ raw_weight_json|escapejs }}';
     
     let ALL_SETS = [];
     let ALL_CARDIO = [];
+    let ALL_WEIGHT = [];
     try {
         if (rawSetsJson && rawSetsJson !== '""') ALL_SETS = JSON.parse(rawSetsJson);
         if (rawCardioJson && rawCardioJson !== '""') ALL_CARDIO = JSON.parse(rawCardioJson);
+        if (rawWeightJson && rawWeightJson !== '""') ALL_WEIGHT = JSON.parse(rawWeightJson);
     } catch(e) {
         console.error("Ошибка парсинга JSON", e);
     }
@@ -592,9 +993,8 @@
     const exercisesList = Array.from(uniqueExercisesMap.entries()).map(([e, g]) => ({ text: e, value: e, group: g }));
     exercisesList.sort((a,b) => a.text.localeCompare(b.text));
 
-    const isDark = document.documentElement.classList.contains('dark');
-    Chart.defaults.font.family = 'Inter, sans-serif'; 
-    Chart.defaults.color = isDark ? '#9ca3af' : '#6b7280';
+    const isDark = getIsDark();
+    const gridColor = initChartDefaults();
     
     let chartInstance = null;
     const ctx = document.getElementById('progressChart').getContext('2d');
@@ -797,29 +1197,8 @@
     // Initial display update
     updateChartTypeDisplay();
     
-    function getWeekString(dateStr) {
-        const d = new Date(dateStr);
-        // adjust to monday
-        const day = d.getDay() || 7;
-        d.setUTCDate(d.getUTCDate() + 4 - day);
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        const weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-        return `${d.getUTCFullYear()}-W${weekNo < 10 ? '0'+weekNo : weekNo}`;
-    }
-
     function formatNumber(num) {
         return Math.round(num * 10) / 10;
-    }
-
-    function formatWeekReadable(isoWk, refDateStr) {
-        if (!refDateStr || !isoWk) return isoWk;
-        const d = new Date(refDateStr);
-        const day = d.getDay() || 7;
-        const start = new Date(d);
-        start.setDate(d.getDate() - day + 1);
-        const options = { month: 'short', day: 'numeric' };
-        const weekNum = isoWk.split('-W')[1] || '';
-        return `Нед ${parseInt(weekNum)} (${start.toLocaleDateString('ru-RU', options)})`;
     }
     
     function drawChart(labels, labelArr, dataArr, config) {
@@ -862,13 +1241,7 @@
                         position: 'top',
                         labels: { boxWidth: 12, usePointStyle: true, font: {size: 11} }
                     },
-                    tooltip: { 
-                        backgroundColor: 'rgba(17,24,39,0.9)', 
-                        padding: 10, 
-                        cornerRadius: 8,
-                        titleFont: { size: 12 },
-                        bodyFont: { size: 13, weight: 'bold' }
-                    }
+                    tooltip: getCommonTooltipConfig(isDark)
                 },
                 scales: {
                     y: { 
@@ -934,52 +1307,6 @@
                 fill: true,
                 colors: [{border: '#3b82f6', bgStart: 'rgba(59,130,246,0.3)'}]
             });
-            
-        } else if (currentChartType === 'volume') {
-            chartTitleElement.textContent = "Объем тренировок по неделям";
-            const weeklyVol = {};
-            const weekDates = {};
-            ALL_SETS.forEach(s => {
-                const w = getWeekString(s.d);
-                weeklyVol[w] = (weeklyVol[w] || 0) + (parseFloat(s.v) || 0);
-                if (!weekDates[w]) weekDates[w] = s.d;
-            });
-            
-            const weeks = Object.keys(weeklyVol).sort();
-            const vols = weeks.map(w => formatNumber(weeklyVol[w]/1000)); // in tons
-            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
-            
-            drawChart(readableWeeks, ['Объем (тонн)'], [vols], {
-                type: 'bar',
-                colors: [{bg: 'rgba(16, 185, 129, 0.8)', border: '#059669'}]
-            });
-            
-        } else if (currentChartType === 'freq') {
-            chartTitleElement.textContent = "Количество тренировок по неделям";
-            const weeklyDays = {};
-            const weekDates = {};
-            ALL_SETS.forEach(s => {
-                const w = getWeekString(s.d);
-                if (!weeklyDays[w]) weeklyDays[w] = new Set();
-                weeklyDays[w].add(s.d);
-                if (!weekDates[w]) weekDates[w] = s.d;
-            });
-            ALL_CARDIO.forEach(c => {
-                 const w = getWeekString(c.d);
-                 if (!weeklyDays[w]) weeklyDays[w] = new Set();
-                 weeklyDays[w].add(c.d);
-                 if (!weekDates[w]) weekDates[w] = c.d;
-            });
-            
-            const weeks = Object.keys(weeklyDays).sort();
-            const counts = weeks.map(w => weeklyDays[w].size);
-            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
-            
-            drawChart(readableWeeks, ['Кол-во тренировок'], [counts], {
-                type: 'bar',
-                colors: [{bg: 'rgba(99, 102, 241, 0.8)', border: '#4f46e5'}]
-            });
-            
         } else if (currentChartType === 'muscle') {
             chartTitleElement.textContent = "Мышечные группы (кол-во подходов)";
             const groupSets = {};
@@ -1016,27 +1343,70 @@
             });
             
         } else if (currentChartType === 'cardio_km') {
-             chartTitleElement.textContent = "Кардио: Дистанция по неделям";
-             const weeklyKm = {};
-             const weekDates = {};
-             ALL_CARDIO.forEach(c => {
-                 const w = getWeekString(c.d);
-                 weeklyKm[w] = (weeklyKm[w] || 0) + (parseFloat(c.k) || 0);
-                 if (!weekDates[w]) weekDates[w] = c.d;
-             });
-             
-             const weeks = Object.keys(weeklyKm).sort();
-             const kms = weeks.map(w => formatNumber(weeklyKm[w]));
-             const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
-             
-             drawChart(readableWeeks, ['Км'], [kms], {
-                 type: 'bar',
-                 colors: [{bg: 'rgba(6, 182, 212, 0.8)', border: '#0891b2'}]
-             });
+            chartTitleElement.textContent = "Кардио: Дистанция по неделям";
+            const weeklyKm = {};
+            const weekDates = {};
+            ALL_CARDIO.forEach(c => {
+                const w = getWeekString(c.d);
+                weeklyKm[w] = (weeklyKm[w] || 0) + (parseFloat(c.k) || 0);
+                if (!weekDates[w]) weekDates[w] = c.d;
+            });
+            
+            const weeks = Object.keys(weeklyKm).sort();
+            const kms = weeks.map(w => formatNumber(weeklyKm[w]));
+            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            
+            drawChart(readableWeeks, ['Км'], [kms], {
+                type: 'bar',
+                colors: [{bg: 'rgba(6, 182, 212, 0.8)', border: '#0891b2'}]
+            });
+        } else if (currentChartType === 'volume') {
+            chartTitleElement.textContent = "Объем тренировок (кг) по дням";
+            const dailyVol = {};
+            ALL_SETS.forEach(s => {
+                dailyVol[s.d] = (dailyVol[s.d] || 0) + (parseFloat(s.v) || 0);
+            });
+            const dates = Object.keys(dailyVol).sort();
+            const volumes = dates.map(d => formatNumber(dailyVol[d]));
+            drawChart(dates, ['Объем (кг)'], [volumes], {
+                type: 'bar',
+                colors: [{bg: 'rgba(99, 102, 241, 0.8)', border: '#4f46e5'}]
+            });
+        } else if (currentChartType === 'freq') {
+            chartTitleElement.textContent = "Частота тренировок (кол-во в неделю)";
+            const weeklyFreq = {};
+            const weekDates = {};
+            // Group raw sets by day first to identify unique workout days
+            const uniqueWorkoutDays = [...new Set(ALL_SETS.map(s => s.d))];
+            uniqueWorkoutDays.forEach(d => {
+                const w = getWeekString(d);
+                weeklyFreq[w] = (weeklyFreq[w] || 0) + 1;
+                if (!weekDates[w]) weekDates[w] = d;
+            });
+            const weeks = Object.keys(weeklyFreq).sort();
+            const counts = weeks.map(w => weeklyFreq[w]);
+            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            drawChart(readableWeeks, ['Тренировки'], [counts], {
+                type: 'bar',
+                colors: [{bg: 'rgba(16, 185, 129, 0.8)', border: '#059669'}]
+            });
+        } else if (currentChartType === 'body_weight') {
+            chartTitleElement.textContent = "Динамика веса тела (кг)";
+            const dates = ALL_WEIGHT.map(w => w.d);
+            const weights = ALL_WEIGHT.map(w => w.w);
+            
+            drawChart(dates, ['Вес (кг)'], [weights], {
+                type: 'line',
+                colors: [{bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981'}]
+            });
         }
     }
     
     // Initial Render
     updateChart();
 </script>
+
+
+
+
 {% endblock %}

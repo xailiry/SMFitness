@@ -28,8 +28,9 @@
                 </div>
                 <div class="flex justify-between text-xs font-bold text-gray-400 px-1">
                     <span id="step1-indicator" class="text-brand-600 dark:text-brand-400">Цель</span>
-                    <span id="step2-indicator">Параметры</span>
-                    <span id="step3-indicator">Ориентир</span>
+                    <span id="step2-indicator">О себе</span>
+                    <span id="step3-indicator">Активность</span>
+                    <span id="step4-indicator">Целевой вес</span>
                 </div>
             </div>
 
@@ -63,42 +64,83 @@
                         →</button>
                 </div>
 
-                <!-- Step 2: Params -->
+                <!-- Step 2: Params (Grouped) -->
                 <div id="step-2" class="hidden transition-all duration-300">
-                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">Ваши физические
-                        параметры</h3>
-                    <div class="space-y-4 mb-6">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Рост
-                                (см)</label>
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">Расскажите о себе</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1.5 ml-1">Ваш пол</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="gender" value="male" class="peer sr-only" {% if form.gender.value == 'male' %}checked{% endif %} required>
+                                    <div class="flex items-center justify-center gap-1.5 py-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 peer-checked:text-blue-700 dark:peer-checked:text-blue-400 font-bold text-sm transition-all hover:bg-gray-50 dark:hover:bg-dark-700">
+                                        <span>♂️</span> М
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="gender" value="female" class="peer sr-only" {% if form.gender.value == 'female' %}checked{% endif %}>
+                                    <div class="flex items-center justify-center gap-1.5 py-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 peer-checked:border-pink-500 peer-checked:bg-pink-50 dark:peer-checked:bg-pink-900/20 peer-checked:text-pink-700 dark:peer-checked:text-pink-400 font-bold text-sm transition-all hover:bg-gray-50 dark:hover:bg-dark-700">
+                                        <span>♀️</span> Ж
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1.5 ml-1">Дата рождения</label>
+                            <input type="date" name="birth_date" value="{{ form.birth_date.value|date:'Y-m-d'|default:'' }}" required
+                                class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 font-bold text-sm">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1.5 ml-1">Рост (см)</label>
                             <input type="number" name="height" value="{{ form.height.value|default:'' }}" required
-                                class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder-gray-400 text-center font-bold text-lg"
+                                class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 text-center font-bold text-lg"
                                 placeholder="175">
                         </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Текущий вес
-                                (кг)</label>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1.5 ml-1">Вес (кг)</label>
                             <input type="number" step="0.1" name="current_weight"
                                 value="{{ form.current_weight.value|default:'' }}" required
-                                class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder-gray-400 text-center font-bold text-lg"
+                                class="w-full bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 outline-none focus:border-brand-500 text-center font-bold text-lg"
                                 placeholder="70.5">
                         </div>
                     </div>
                     <div class="flex gap-3">
                         <button type="button" onclick="prevStep()"
-                            class="w-1/3 bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">←
-                            Назад</button>
+                            class="w-1/3 bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-lg transition-all">←</button>
                         <button type="button" onclick="nextStep()"
-                            class="w-2/3 btn-gradient bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-brand-500/20 active:scale-[0.98] transition-all">Далее
-                            →</button>
+                            class="w-2/3 btn-gradient bg-gradient-to-r from-brand-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-brand-500/20 transition-all">Далее</button>
                     </div>
                 </div>
 
-                <!-- Step 3: Target Weight -->
+                <!-- Step 3: Activity Level -->
                 <div id="step-3" class="hidden transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">Ваша активность</h3>
+                    <div class="space-y-2.5 mb-6">
+                        {% for value, label in form.fields.activity_level.choices %}
+                        <label class="cursor-pointer block">
+                            <input type="radio" name="activity_level" value="{{ value }}" class="peer sr-only" {% if form.activity_level.value == value or not form.activity_level.value and value == 'light' %}checked{% endif %}>
+                            <div class="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-700 peer-checked:border-brand-500 peer-checked:bg-brand-50 dark:peer-checked:bg-brand-900/20 transition-all">
+                                <span class="text-2xl">
+                                    {% if value == 'sedentary' %}🪑{% elif value == 'light' %}🚶‍♂️{% elif value == 'moderate' %}🏃‍♂️{% elif value == 'very_active' %}🏋️‍♂️{% else %}🏔️{% endif %}
+                                </span>
+                                <span class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ label }}</span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="prevStep()"
+                            class="w-1/3 bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-lg transition-all">←</button>
+                        <button type="button" onclick="nextStep()"
+                            class="w-2/3 btn-gradient bg-gradient-to-r from-brand-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-brand-500/20 transition-all">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Target Weight -->
+                <div id="step-4" class="hidden transition-all duration-300">
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Целевой вес</h3>
-                        <p class="text-xs text-gray-400 dark:text-gray-500">Укажите вес, к которому вы стремитесь (необязательно)</p>
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500">Укажите вес, к которому вы стремитесь</p>
                     </div>
                     
                     <div class="bg-brand-50/50 dark:bg-brand-900/10 p-6 rounded-2xl border border-brand-100 dark:border-brand-900/20 mb-6">
@@ -113,11 +155,9 @@
 
                     <div class="flex gap-3">
                         <button type="button" onclick="prevStep()"
-                            class="w-1/3 bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">←
-                            Назад</button>
+                            class="w-1/3 bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-lg transition-all">←</button>
                         <button type="submit"
-                            class="w-2/3 btn-gradient bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all">Начать
-                            тренировки 🚀</button>
+                            class="w-2/3 btn-gradient bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3.5 rounded-xl font-bold text-lg shadow-xl shadow-emerald-500/20 transition-all">Поехали! 🚀</button>
                     </div>
                 </div>
             </form>
@@ -128,47 +168,62 @@
 <script>
     let currentStep = 1;
 
+    function updateIndicators() {
+        document.getElementById('step2-indicator').classList.toggle('text-brand-600', currentStep >= 2);
+        document.getElementById('step2-indicator').classList.toggle('dark:text-brand-400', currentStep >= 2);
+        document.getElementById('step3-indicator').classList.toggle('text-brand-600', currentStep >= 3);
+        document.getElementById('step3-indicator').classList.toggle('dark:text-brand-400', currentStep >= 3);
+        document.getElementById('step4-indicator').classList.toggle('text-brand-600', currentStep >= 4);
+        document.getElementById('step4-indicator').classList.toggle('dark:text-brand-400', currentStep >= 4);
+        
+        const progress = ((currentStep - 1) / 3) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+    }
+
     function nextStep() {
         if (currentStep === 1) {
             const selectedGoal = document.querySelector('input[name="goal"]:checked');
             if (!selectedGoal) {
-                showNotification('Пожалуйста, выберите цель тренировок!', 'error');
+                showNotification('Выберите цель!', 'error');
                 return;
             }
             document.getElementById('step-1').classList.add('hidden');
             document.getElementById('step-2').classList.remove('hidden');
-            document.getElementById('progress-bar').style.width = '50%';
-            document.getElementById('step2-indicator').classList.add('text-brand-600', 'dark:text-brand-400');
             currentStep = 2;
         } else if (currentStep === 2) {
             const height = document.querySelector('input[name="height"]').value;
             const weight = document.querySelector('input[name="current_weight"]').value;
-            if (!height || !weight) {
-                showNotification('Пожалуйста, заполните рост и текущий вес!', 'error');
+            const birth_date = document.querySelector('input[name="birth_date"]').value;
+            if (!height || !weight || !birth_date) {
+                showNotification('Заполните все поля!', 'error');
                 return;
             }
             document.getElementById('step-2').classList.add('hidden');
             document.getElementById('step-3').classList.remove('hidden');
-            document.getElementById('progress-bar').style.width = '100%';
-            document.getElementById('step3-indicator').classList.add('text-brand-600', 'dark:text-brand-400');
             currentStep = 3;
+        } else if (currentStep === 3) {
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('step-4').classList.remove('hidden');
+            currentStep = 4;
         }
+        updateIndicators();
     }
 
     function prevStep() {
         if (currentStep === 2) {
             document.getElementById('step-2').classList.add('hidden');
             document.getElementById('step-1').classList.remove('hidden');
-            document.getElementById('progress-bar').style.width = '0%';
-            document.getElementById('step2-indicator').classList.remove('text-brand-600', 'dark:text-brand-400');
             currentStep = 1;
         } else if (currentStep === 3) {
             document.getElementById('step-3').classList.add('hidden');
             document.getElementById('step-2').classList.remove('hidden');
-            document.getElementById('progress-bar').style.width = '50%';
-            document.getElementById('step3-indicator').classList.remove('text-brand-600', 'dark:text-brand-400');
             currentStep = 2;
+        } else if (currentStep === 4) {
+            document.getElementById('step-4').classList.add('hidden');
+            document.getElementById('step-3').classList.remove('hidden');
+            currentStep = 3;
         }
+        updateIndicators();
     }
 
 </script>

@@ -52,13 +52,17 @@
 
         <form method="post" id="workout-form" novalidate>
             {% csrf_token %}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Дата тренировки</label>
                     {{ workout_form.date }}
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Заметки <span class="text-gray-400 font-normal">(опционально)</span></label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Ваш вес (кг) <span class="text-gray-400 font-normal">(опц)</span></label>
+                    {{ workout_form.body_weight }}
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Заметки <span class="text-gray-400 font-normal">(опц)</span></label>
                     {{ workout_form.notes }}
                 </div>
             </div>

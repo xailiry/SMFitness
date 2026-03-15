@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+from .utils import calculate_set_volume
 
 MUSCLE_GROUP_CHOICES = [
     ('chest', 'Грудь'),
@@ -35,6 +37,19 @@ GOAL_CHOICES = [
     ('health', 'Поддержание здоровья'),
 ]
 
+GENDER_CHOICES = [
+    ('male', 'Мужской'),
+    ('female', 'Женский'),
+]
+
+ACTIVITY_LEVEL_CHOICES = [
+    ('sedentary', 'Сидячий образ жизни (нет нагрузок)'),
+    ('light', 'Малоактивный (1-3 тренировки в неделю)'),
+    ('moderate', 'Умеренно активный (3-5 тренировок в неделю)'),
+    ('very_active', 'Очень активный (интенсивные тренировки 6-7 раз в неделю)'),
+    ('extra_active', 'Экстра-активный (физическая работа + тяжелые тренировки)'),
+]
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -42,7 +57,12 @@ class UserProfile(models.Model):
     current_weight = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True, verbose_name="Текущий вес (кг)", validators=[MinValueValidator(30), MaxValueValidator(500)])
     target_weight = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True, verbose_name="Целевой вес (кг)", validators=[MinValueValidator(30), MaxValueValidator(500)])
     goal = models.CharField(max_length=20, choices=GOAL_CHOICES, blank=True, default='later', verbose_name="Цель")
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True, verbose_name="Пол")
+    birth_date = models.DateField(blank=True, null=True, verbose_name="Дата рождения")
+    activity_level = models.CharField(max_length=20, choices=ACTIVITY_LEVEL_CHOICES, default='light', verbose_name="Уровень активности")
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name="Аватар")
+    dashboard_layout = models.JSONField(default=dict, blank=True, verbose_name="Раскладка дашборда")
+    dismissed_plateau_date = models.DateField(null=True, blank=True, verbose_name="Дата закрытия уведомления о плато")
 
     def __str__(self):
         return f"Профиль {self.user.username}"
@@ -63,6 +83,7 @@ class Exercise(models.Model):
 class Workout(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="workouts", verbose_name="Пользователь")
     date = models.DateField(verbose_name="Дата")
+    body_weight = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True, verbose_name="Вес тела")
     notes = models.TextField(blank=True, null=True, verbose_name="Заметки")
 
     def __str__(self):
@@ -75,41 +96,9 @@ class Workout(models.Model):
     def total_volume(self):
         """
         Total volume = sum of (sets * reps * weight) for all workout sets.
-        If reps and weight are strings like '6-5-4' and '60-65-70', it sums the individual products.
-        If weight is a single number and reps is a list, it multiplies each rep by that weight.
-        If weight is None or is_bodyweight is True, weight is considered 0 for volume calculation.
+        Uses centralized logic from utils.py via WorkoutSet.get_volume().
         """
-        total = 0
-        for s in self.sets.all():
-            if s.is_bodyweight:
-                total += 0
-                continue
-                
-            reps_str = str(s.reps).replace(',', '-').replace(' ', '-')
-            reps_list = [int(r) for r in reps_str.split('-') if r.isdigit()]
-            
-            w_str = str(s.weight or '0').replace(',', '-').replace(' ', '-')
-            w_list = [float(w) for w in w_str.split('-') if w.replace('.', '', 1).isdigit()]
-            
-            # If no valid reps, volume is 0
-            if not reps_list:
-                continue
-                
-            # Improved volume calculation logic
-            if len(w_list) == 0:
-                # No weight given, volume is 0
-                continue
-                
-            if len(reps_list) == 1:
-                # Single value for reps, multiply by number of sets
-                total += reps_list[0] * s.sets * w_list[0]
-            else:
-                # Multiple values for reps (e.g. 10-8-6), sum them up
-                for i, r in enumerate(reps_list):
-                    # Use current weight from list or last available weight if list is shorter
-                    current_w = w_list[i] if i < len(w_list) else w_list[-1]
-                    total += r * current_w
-        return total
+        return sum(s.get_volume() for s in self.sets.all())
 
     @property
     def total_cardio_minutes(self):
@@ -144,6 +133,14 @@ class WorkoutSet(models.Model):
             return max(w_list) if w_list else 0.0
         except (ValueError, TypeError):
             return 0.0
+
+    def get_volume(self):
+        """Возвращает объем данного упражнения."""
+        return calculate_set_volume(self.sets, self.reps, self.weight, self.is_bodyweight)
+
+    def get_volume(self):
+        """Возвращает объем данного упражнения."""
+        return calculate_set_volume(self.sets, self.reps, self.weight, self.is_bodyweight)
 
 
 class AIAdviceLog(models.Model):
@@ -212,3 +209,38 @@ class WorkoutTemplateExercise(models.Model):
         ordering = ['order']
         verbose_name = "Упражнение в шаблоне"
         verbose_name_plural = "Упражнения в шаблоне"
+
+class AIStrategy(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='ai_strategy', verbose_name="Пользователь")
+    
+    # Calculated Macros
+    calories = models.PositiveIntegerField(verbose_name="Калории")
+    protein = models.PositiveIntegerField(verbose_name="Белки (г)")
+    fats = models.PositiveIntegerField(verbose_name="Жиры (г)")
+    carbs = models.PositiveIntegerField(verbose_name="Углеводы (г)")
+    
+    # AI Content
+    diet_plan = models.TextField(verbose_name="План питания")
+    workout_strategy = models.TextField(verbose_name="Стратегия тренировок")
+    
+    date_generated = models.DateTimeField(auto_now=True, verbose_name="Дата генерации")
+
+    def __str__(self):
+        return f"ИИ Стратегия для {self.user.username} ({self.date_generated.strftime('%d.%m.%Y')})"
+
+    class Meta:
+        verbose_name = "ИИ Стратегия"
+        verbose_name_plural = "ИИ Стратегии"
+
+class WeightLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='weight_logs')
+    weight = models.DecimalField(max_digits=5, decimal_places=1)
+    date = models.DateField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Лог веса"
+        verbose_name_plural = "Логи веса"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.weight}кг ({self.date})"

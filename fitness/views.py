@@ -13,12 +13,20 @@ from django.forms import inlineformset_factory
 from django.http import JsonResponse
 from django.db.models import Sum, Max, F, Count
 import google.generativeai as genai
-from .models import Workout, WorkoutSet, Exercise, UserProfile, MUSCLE_GROUP_CHOICES, AIAdviceLog, CardioEntry, WorkoutTemplate, WorkoutTemplateExercise
+from django.views.decorators.http import require_POST
+from .utils import calculate_macros, calculate_age, predict_weight_goal_date
+from .models import Workout, WorkoutSet, Exercise, UserProfile, MUSCLE_GROUP_CHOICES, AIAdviceLog, CardioEntry, WorkoutTemplate, WorkoutTemplateExercise, WeightLog, AIStrategy
 from .forms import (
     WorkoutForm, WorkoutSetForm, UserProfileForm, CardioEntryForm, 
     UsernameUpdateForm, CustomPasswordChangeForm, AvatarUpdateForm
 )
 
+
+DEFAULT_DASHBOARD_LAYOUT = {
+    'top_row': ['total_workouts', 'total_volume', 'streak', 'best_lift'],
+    'sidebar': ['insights', 'weight_goal', 'ai_strategy_promo', 'bmi', 'macros_card', 'cardio_card', 'daily_quote', 'progress_chart'],
+    'hidden': []
+}
 
 def landing_page(request):
     """Landing page for unauthenticated users."""
@@ -143,36 +151,7 @@ def generate_insights(user):
 
     # ── 3. Серия тренировок (streak) ──
     # Unify with dashboard logic
-    def calculate_streak(user_obj):
-        all_w = Workout.objects.filter(user=user_obj).order_by('-date')
-        if not all_w.exists(): return 0
-        
-        today = timezone.now().date()
-        # Start of current calendar week (Monday)
-        week_start = today - timedelta(days=today.weekday())
-        
-        # Check if there is a workout this week
-        has_this_week = all_w.filter(date__gte=week_start).exists()
-        
-        streak = 0
-        current_ws = week_start
-        
-        if not has_this_week:
-            # Check if there was a workout last week to keep streak alive
-            last_week_start = week_start - timedelta(days=7)
-            if not all_w.filter(date__range=[last_week_start, week_start - timedelta(days=1)]).exists():
-                return 0
-            current_ws = last_week_start # Start counting from last week
-
-        while True:
-            next_ws = current_ws - timedelta(days=7)
-            if all_w.filter(date__range=[current_ws, current_ws + timedelta(days=6)]).exists():
-                streak += 1
-                current_ws = next_ws
-            else:
-                break
-        return streak
-
+    from .utils import calculate_streak
     weeks_count = calculate_streak(user)
     
     if weeks_count >= 2: # Show even for 2 weeks
@@ -247,6 +226,15 @@ def generate_insights(user):
                 'text': f"Невероятно! За всё время вы подняли уже более {reached_milestone} тонн железа!"
             })
 
+    # ── 8. AI Strategy missing (Call to action) ──
+    if not AIStrategy.objects.filter(user=user).exists():
+        insights.append({
+            'type': 'ai_strategy',
+            'icon': '✨',
+            'text': "Вы ещё не создали персональную ИИ-стратегию! Получите план питания и тренировок прямо сейчас.",
+            'link': '/ai-strategy/'
+        })
+
     # Ограничить отдачу до 4 интересных инсайтов случайным образом, но приоритет важным
     if len(insights) > 4:
         random.shuffle(insights)
@@ -270,7 +258,10 @@ def profile(request):
         if action == 'update_profile':
             form = UserProfileForm(request.POST, request.FILES, instance=profile_instance)
             if form.is_valid():
-                form.save()
+                old_weight = profile_instance.current_weight
+                new_profile = form.save()
+                if old_weight != new_profile.current_weight:
+                    WeightLog.objects.create(user=request.user, weight=new_profile.current_weight)
                 messages.success(request, "Профиль успешно обновлен!")
                 return redirect('profile')
         
@@ -320,6 +311,11 @@ def profile(request):
 
     user_templates = WorkoutTemplate.objects.filter(user=request.user).prefetch_related('exercises__exercise')
 
+    # Calculate Macros
+    macros = None
+    if profile_instance.height and profile_instance.current_weight and profile_instance.birth_date and profile_instance.gender:
+        macros = calculate_macros(profile_instance)
+
     return render(request, 'fitness/profile.html', {
         'form': form,
         'username_form': username_form,
@@ -330,6 +326,7 @@ def profile(request):
         'bmi': bmi,
         'bmi_category': bmi_category,
         'user_templates': user_templates,
+        'macros': macros,
     })
 
 
@@ -409,8 +406,6 @@ def dashboard(request):
                 weight_progress_pct = 100
                 weight_goal_reached = True
             else:
-                # Use a 10kg window for a more "active" progress bar if no history, 
-                # but better to keep it simple as requested
                 weight_progress_pct = max(0, min(100, int((target / curr) * 100)))
         elif profile.goal == 'mass':
             if curr >= target:
@@ -421,6 +416,18 @@ def dashboard(request):
         else:
             weight_progress_pct = 100 if weight_diff < 0.5 else int((min(curr, target) / max(curr, target)) * 100)
             if weight_diff < 0.5: weight_goal_reached = True
+
+    # Automatic Weight Logging (if weight changed and no log today)
+    if profile.current_weight:
+        from .models import WeightLog
+        today_date = timezone.now().date()
+        last_log = WeightLog.objects.filter(user=request.user, date=today_date).first()
+        if not last_log or last_log.weight != profile.current_weight:
+             WeightLog.objects.update_or_create(
+                 user=request.user, 
+                 date=today_date, 
+                 defaults={'weight': profile.current_weight}
+             )
 
     # ── Stats cards ──
     total_workouts = all_workouts.count()
@@ -433,26 +440,8 @@ def dashboard(request):
 
     for workout in all_workouts:
         for s in workout.sets.all():
-            reps_str = str(s.reps).replace(',', '-').replace(' ', '-')
-            rep_parts = [int(r) for r in reps_str.split('-') if r.isdigit()]
-            
-            w_str = str(s.weight or '0').replace(',', '-').replace(' ', '-')
-            w_list = [float(wt) for wt in w_str.split('-') if wt.replace('.', '', 1).isdigit()]
+            v = s.get_volume()
             max_w = s.get_max_weight()
-
-            # Volume calculation for this set
-            v = 0.0
-            if rep_parts:
-                if s.is_bodyweight:
-                    v = 0.0
-                elif len(rep_parts) > 1 and len(w_list) == 1:
-                    v = sum(rep_parts) * w_list[0]
-                elif len(rep_parts) > 1 and len(w_list) > 1:
-                    v = sum(r * wt for r, wt in zip(rep_parts, w_list))
-                elif len(rep_parts) == 1 and len(w_list) == 1:
-                    v = s.sets * rep_parts[0] * w_list[0]
-                elif len(rep_parts) == 1 and len(w_list) > 1:
-                    v = rep_parts[0] * sum(w_list)
             
             total_volume += v
             
@@ -467,71 +456,20 @@ def dashboard(request):
                 'm': str(s.exercise.muscle_group),
                 'w': float(max_w),
                 'v': float(v),
-                'sets': len(rep_parts) if rep_parts else int(s.sets)
+                'sets': s.sets
             })
     
     total_volume_tons = total_volume / 1000
 
     # Streak: consecutive weeks with at least 1 workout
     # Better logic: if no workout this week, check last week to maintain streak
-    streak = 0
-    if total_workouts > 0:
-        today = timezone.now().date()
-        week_start = today - timedelta(days=today.weekday())
-        
-        # In-memory check using all_workouts (which is already fetched)
-        has_this_week = any(w.date >= week_start for w in all_workouts)
-        
-        curr_ws = week_start
-        if not has_this_week:
-            # Check last week
-            last_ws = week_start - timedelta(days=7)
-            if any(last_ws <= w.date < week_start for w in all_workouts):
-                curr_ws = last_ws
-            else:
-                curr_ws = None # Streak is 0
-
-        if curr_ws:
-            while True:
-                if any(curr_ws <= w.date <= curr_ws + timedelta(days=6) for w in all_workouts):
-                    streak += 1
-                    curr_ws -= timedelta(days=7)
-                else:
-                    break
+    from .utils import calculate_streak
+    streak = calculate_streak(request.user)
 
     # ── Chart data: supply raw data for JS charting (similar to statistics) ──
-    raw_sets = []
-    for workout in all_workouts:
-        for s in workout.sets.all():
-            
-            reps_str = str(s.reps).replace(',', '-').replace(' ', '-')
-            rep_parts = [int(r) for r in reps_str.split('-') if r.isdigit()]
-            
-            w_str = str(s.weight or '0').replace(',', '-').replace(' ', '-')
-            w_list = [float(wt) for wt in w_str.split('-') if wt.replace('.', '', 1).isdigit()]
-            max_w = s.get_max_weight()
-
-            if not rep_parts or s.is_bodyweight:
-                v = 0.0
-            elif len(rep_parts) > 1 and len(w_list) == 1:
-                v = sum(rep_parts) * w_list[0]
-            elif len(rep_parts) > 1 and len(w_list) > 1:
-                v = sum(r * wt for r, wt in zip(rep_parts, w_list))
-            elif len(rep_parts) == 1 and len(w_list) == 1:
-                v = s.sets * rep_parts[0] * w_list[0]
-            elif len(rep_parts) == 1 and len(w_list) > 1:
-                v = rep_parts[0] * sum(w_list)
-            else:
-                v = 0.0
-            
-            raw_sets.append({
-                'd': workout.date.strftime('%Y-%m-%d'),
-                'e': str(s.exercise.name),
-                'm': str(s.exercise.muscle_group),
-                'w': float(max_w),
-                'v': float(v),
-                'sets': len(rep_parts) if rep_parts else int(s.sets)
-            })
+    # Re-use raw_sets if applicable, but dashboard had it twice for some reason in the previous view. 
+    # Actually, in the code snippet I saw lines 500-508 and then 539-570. It seems redundant.
+    # I'll keep the first one and remove the second duplication.
             
     raw_cardio = []
     for c in CardioEntry.objects.filter(workout__user=request.user).select_related('workout'):
@@ -587,11 +525,44 @@ def dashboard(request):
     CHART_MIN_WORKOUTS = 3
     show_charts = total_workouts >= CHART_MIN_WORKOUTS
 
+    # --- Plateau Detection ---
+    plateau_message = None
+    if all_workouts.count() >= 5:
+        # Don't show if dismissed today
+        if not profile.dismissed_plateau_date or profile.dismissed_plateau_date < timezone.now().date():
+            # Use already fetched all_workouts
+            w_list = list(all_workouts[:5])
+            recent_vol = sum([w.total_volume for w in w_list[:3]]) / 3
+            old_vol = sum([w.total_volume for w in w_list[3:5]]) / 2
+            if recent_vol <= old_vol:
+                plateau_message = "Заметили застой в результатах? Попробуйте сменить программу или сделать легкую тренировочную неделю."
+
+    # --- Weight Prediction ---
+    prediction_date = None
+    weight_logs = WeightLog.objects.filter(user=request.user).order_by('date')
+    if weight_logs.count() >= 3 and profile.target_weight:
+        log_data = [(l.date, l.weight) for l in weight_logs]
+        prediction_date = predict_weight_goal_date(log_data, profile.target_weight)
+
+    # Calculate Macros for Dashboard card
+    macros = None
+    if profile.height and profile.current_weight and profile.birth_date and profile.gender:
+        macros = calculate_macros(profile)
+
+    # --- Weight History for Chart ---
+    raw_weight = []
+    for wl in weight_logs:
+        raw_weight.append({
+            'd': wl.date.strftime('%Y-%m-%d'),
+            'w': float(wl.weight)
+        })
+
     context = {
         'workouts': workouts,
         'exercises': exercises,
         'raw_sets_json': json.dumps(raw_sets),
         'raw_cardio_json': json.dumps(raw_cardio),
+        'raw_weight_json': json.dumps(raw_weight),
         'total_workouts': total_workouts,
         'total_volume_tons': round(float(total_volume_tons), 2),
         'best_lift': best_lift,
@@ -609,9 +580,54 @@ def dashboard(request):
         'weight_progress_pct': weight_progress_pct,
         'weight_goal_reached': weight_goal_reached,
         'weight_diff': weight_diff if 'weight_diff' in locals() else None,
-        'target_weight': profile.target_weight if 'profile' in locals() else None,
+        'target_weight': profile.target_weight,
+        'plateau_message': plateau_message,
+        'prediction_date': prediction_date,
+        'macros': macros,
+        'ai_strategy': getattr(request.user, 'ai_strategy', None),
+        'layout': profile.dashboard_layout if profile.dashboard_layout else DEFAULT_DASHBOARD_LAYOUT,
     }
     return render(request, 'fitness/dashboard.html', context)
+
+
+@login_required
+@require_POST
+def update_dashboard_layout(request):
+    try:
+        data = json.loads(request.body)
+        layout = data.get('layout')
+        if layout:
+            profile = request.user.profile
+            profile.dashboard_layout = layout
+            profile.save()
+            return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid data'}, status=400)
+
+
+@login_required
+@require_POST
+def dismiss_plateau(request):
+    try:
+        profile = request.user.profile
+        profile.dismissed_plateau_date = timezone.now().date()
+        profile.save()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def reset_dashboard_layout(request):
+    try:
+        profile = request.user.profile
+        profile.dashboard_layout = DEFAULT_DASHBOARD_LAYOUT
+        profile.save()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
 @login_required
@@ -654,28 +670,12 @@ def statistics(request):
         wk_key = f"{iso[0]}-W{iso[1]:02d}"
         
         for s in w.sets.all():
-            # Parse reps and weight once
-            reps_str = str(s.reps).replace(',', '-').replace(' ', '-')
-            rep_parts = [int(r) for r in reps_str.split('-') if r.isdigit()]
-            total_reps = sum(rep_parts) if rep_parts else 0
-            
-            w_str = str(s.weight or '0').replace(',', '-').replace(' ', '-')
-            w_list = [float(wt) for wt in w_str.split('-') if wt.replace('.', '', 1).isdigit()]
+            v = s.get_volume()
             max_w = s.get_max_weight()
-
-            # Volume calculation
-            v = 0.0
-            if rep_parts:
-                if s.is_bodyweight:
-                    v = 0.0
-                elif len(rep_parts) > 1 and len(w_list) == 1:
-                    v = total_reps * w_list[0]
-                elif len(rep_parts) > 1 and len(w_list) > 1:
-                    v = sum(r * wt for r, wt in zip(rep_parts, w_list))
-                elif len(rep_parts) == 1 and len(w_list) == 1:
-                    v = s.sets * rep_parts[0] * w_list[0]
-                elif len(rep_parts) == 1 and len(w_list) > 1:
-                    v = rep_parts[0] * sum(w_list)
+            
+            # For reps, we might still need a quick parse if we want total reps
+            reps_str = str(s.reps).replace(',', '-').replace(' ', '-')
+            total_reps = sum(int(r) for r in reps_str.split('-') if r.isdigit())
             
             weekly_volume_raw[wk_key] += v
             
@@ -692,7 +692,7 @@ def statistics(request):
                 'v': float(v),
                 'w': float(max_w),
                 'r': total_reps,
-                'sets': len(rep_parts) if rep_parts else int(s.sets)
+                'sets': s.sets
             })
 
     # Weekly volume labels/values
@@ -735,47 +735,21 @@ def statistics(request):
         cardio_minutes_values.append(cardio_weekly_minutes_raw[k])
         cardio_km_values.append(round(cardio_weekly_km_raw[k], 2))
 
-    # Raw data for JS filtering
-    raw_sets = []
-    for w in all_workouts:
-        for s in w.sets.all():
-            reps_str = str(s.reps).replace(',', '-').replace(' ', '-')
-            rep_parts = [int(r) for r in reps_str.split('-') if r.isdigit()]
-            total_reps = sum(rep_parts) if rep_parts else 0
-            
-            w_str = str(s.weight or '0').replace(',', '-').replace(' ', '-')
-            w_list = [float(wt) for wt in w_str.split('-') if wt.replace('.', '', 1).isdigit()]
-            max_w = s.get_max_weight()
-
-            if not rep_parts or s.is_bodyweight:
-                v = 0.0
-            elif len(rep_parts) > 1 and len(w_list) == 1:
-                v = sum(rep_parts) * w_list[0]
-            elif len(rep_parts) > 1 and len(w_list) > 1:
-                v = sum(r * wt for r, wt in zip(rep_parts, w_list))
-            elif len(rep_parts) == 1 and len(w_list) == 1:
-                v = s.sets * rep_parts[0] * w_list[0]
-            elif len(rep_parts) == 1 and len(w_list) > 1:
-                v = rep_parts[0] * sum(w_list)
-            else:
-                v = 0.0
-            
-            raw_sets.append({
-                'd': w.date.strftime('%Y-%m-%d'),
-                'e': s.exercise.name,
-                'm': str(muscle_labels_map.get(s.exercise.muscle_group, s.exercise.muscle_group)),
-                'v': float(v),
-                'w': float(max_w),
-                'r': total_reps,
-                'sets': len(rep_parts) if rep_parts else int(s.sets)
-            })
-    
     raw_cardio = []
     for c in all_cardio:
         raw_cardio.append({
             'd': c.workout.date.strftime('%Y-%m-%d'),
             'min': c.duration_minutes,
             'km': float(c.distance_km or 0)
+        })
+
+    # --- Weight History ---
+    weight_logs = WeightLog.objects.filter(user=request.user).order_by('date')
+    raw_weight = []
+    for wl in weight_logs:
+        raw_weight.append({
+            'd': wl.date.strftime('%Y-%m-%d'),
+            'w': float(wl.weight)
         })
 
     CHART_MIN_WORKOUTS = 3
@@ -789,6 +763,7 @@ def statistics(request):
         'min_workouts': CHART_MIN_WORKOUTS,
         'raw_sets_json': json.dumps(raw_sets),
         'raw_cardio_json': json.dumps(raw_cardio),
+        'raw_weight_json': json.dumps(raw_weight),
     }
     return render(request, 'fitness/statistics.html', context)
 
@@ -811,6 +786,17 @@ def add_workout(request):
             if formset.is_valid() and cardio_formset.is_valid():
                 workout.save()
                 formset.save()
+                # If weight is provided, update profile and weight log
+                if workout.body_weight:
+                    profile = request.user.profile
+                    profile.current_weight = workout.body_weight
+                    profile.save()
+                    from .models import WeightLog
+                    WeightLog.objects.update_or_create(
+                        user=request.user,
+                        date=workout.date,
+                        defaults={'weight': workout.body_weight}
+                    )
                 # Only save cardio forms that have actual data
                 for cform in cardio_formset:
                     if cform.cleaned_data.get('duration_minutes'):
@@ -879,7 +865,7 @@ def get_ai_recommendation(request):
         return JsonResponse({'error': 'Для получения советов от ИИ необходимо провести минимум 3 тренировки.'}, status=400)
 
     if not workouts.exists():
-        return JsonResponse({'recommendation': 'У вас пока нет тренировок за последние 30 дней. Начните тренироваться, чтобы получить совет!'})
+        return JsonResponse({'error': 'У вас пока нет тренировок за последние 30 дней. Начните тренироваться, чтобы получить совет!'}, status=400)
 
     # Profile context
     profile_info = ""
@@ -931,7 +917,7 @@ def get_ai_recommendation(request):
     try:
         api_key = os.getenv('GEMINI_API_KEY')
         if not api_key:
-            return JsonResponse({'recommendation': 'API ключ Gemini не настроен.'})
+            return JsonResponse({'error': 'API ключ Gemini не настроен.'}, status=500)
 
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-flash-latest')
@@ -947,7 +933,7 @@ def get_ai_recommendation(request):
 
         return JsonResponse({'recommendation': advice})
     except Exception as e:
-        return JsonResponse({'recommendation': f'Произошла ошибка при обращении к ИИ: {str(e)}'})
+        return JsonResponse({'error': f'Произошла ошибка при обращении к ИИ: {str(e)}'}, status=500)
 
 @login_required
 def ai_journal(request):
@@ -970,13 +956,15 @@ def onboarding_view(request):
     user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
     
     # If already onboarded, send to dashboard
-    if user_profile.height and user_profile.current_weight:
+    if user_profile.height and user_profile.current_weight and user_profile.gender and user_profile.birth_date:
         return redirect('dashboard')
         
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=user_profile)
+        form = UserProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
-            form.save()
+            p = form.save()
+            if p.current_weight:
+                WeightLog.objects.create(user=request.user, weight=p.current_weight)
             # Set a flag in session to show the interactive tutorial on the dashboard
             request.session['show_tutorial'] = True
             return redirect('dashboard')
@@ -985,6 +973,101 @@ def onboarding_view(request):
         form = UserProfileForm(instance=user_profile)
         
     return render(request, 'fitness/onboarding.html', {'form': form})
+
+@login_required
+def ai_strategy(request):
+    strategy = getattr(request.user, 'ai_strategy', None)
+    
+    # Calculate cooldown
+    can_update = True
+    days_until_update = 0
+    if strategy:
+        diff = timezone.now() - strategy.date_generated
+        if diff.days < 7:
+            can_update = False
+            days_until_update = 7 - diff.days
+            
+    return render(request, 'fitness/ai_strategy.html', {
+        'strategy': strategy,
+        'can_update': can_update,
+        'days_until_update': days_until_update
+    })
+
+@login_required
+@require_POST
+def generate_strategy(request):
+    try:
+        profile = request.user.profile
+        if not (profile.height and profile.current_weight and profile.birth_date and profile.gender):
+            return JsonResponse({'error': 'Пожалуйста, заполните все данные в профиле (пол, возраст, рост, вес).'}, status=400)
+            
+        # Cooldown check
+        strategy = getattr(request.user, 'ai_strategy', None)
+        if strategy:
+            diff = timezone.now() - strategy.date_generated
+            if diff.days < 7:
+                return JsonResponse({'error': f'Обновление стратегии доступно раз в неделю. Подождите еще {7 - diff.days} дн.'}, status=429)
+
+        # 1. Calc Macros
+        macros = calculate_macros(profile)
+        
+        # 2. Get history context
+        last_workouts = Workout.objects.filter(user=request.user).order_by('-date')[:5].prefetch_related('sets__exercise')
+        history_summary = ""
+        if last_workouts.exists():
+            history_summary = "Последние тренировки:\n"
+            for w in last_workouts:
+                history_summary += f"- {w.date}: {w.total_volume}кг. Упр: {', '.join([s.exercise.name for s in w.sets.all()[:3]])}\n"
+
+        # 3. Prompt
+        prompt = (
+            f"Ты профессиональный диетолог и фитнес-тренер.\n"
+            f"Данные пользователя: {profile.gender}, {calculate_age(profile.birth_date)} лет, "
+            f"вес {profile.current_weight}кг, рост {profile.height}см, цель: {profile.get_goal_display()}.\n"
+            f"Рассчитанные нормы: {macros['calories']} ккал, Б:{macros['protein']}г, Ж:{macros['fats']}г, У:{macros['carbs']}г.\n"
+            f"{history_summary}\n"
+            "ЗАДАЧА:\n"
+            "1. Составь бюджетный план питания на день (3-4 приема пищи). "
+            "Используй простые доступные продукты (крупы, курица, яйца, сезонные овощи). "
+            "Указывай примерный вес продуктов в граммах.\n"
+            "НЕ ПИШИ никаких вступлений, приветствий или резюме (типа 'Вкусно, дешево...'). Сразу начинай с '1. Завтрак:'.\n"
+            "2. Дай 3 конкретных совета по стратегии тренировок для достижения цели.\n\n"
+            "ОТВЕТЬ В ФОРМАТЕ JSON:\n"
+            "{\n"
+            "  \"diet\": \"текст плана питания\",\n"
+            "  \"workout\": \"текст стратегии тренировок\"\n"
+            "}\n"
+            "Пиши на русском языке."
+        )
+
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return JsonResponse({'error': 'API ключ не настроен.'}, status=500)
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-flash-latest')
+        response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
+        
+        import json
+        data = json.loads(response.text)
+        
+        # 4. Save/Update Strategy
+        from .models import AIStrategy
+        AIStrategy.objects.update_or_create(
+            user=request.user,
+            defaults={
+                'calories': macros['calories'],
+                'protein': macros['protein'],
+                'fats': macros['fats'],
+                'carbs': macros['carbs'],
+                'diet_plan': data.get('diet', ''),
+                'workout_strategy': data.get('workout', ''),
+            }
+        )
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': f'Ошибка: {str(e)}'}, status=500)
 
 @login_required
 def save_as_template(request, pk):

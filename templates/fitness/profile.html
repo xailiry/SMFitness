@@ -65,25 +65,83 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="bg-brand-50/50 dark:bg-brand-900/20 rounded-xl p-4 border border-brand-100/50 dark:border-brand-800/30 text-center">
                 <p class="text-2xl font-extrabold text-brand-700 dark:text-brand-400">{{ total_workouts }}</p>
-                <p class="text-xs font-medium text-brand-600 dark:text-brand-400 mt-1">Тренировок всего</p>
+                <p class="text-xs font-medium text-brand-600 dark:text-brand-400 mt-1">Тренировок</p>
             </div>
             <div class="bg-emerald-50/50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-100/50 dark:border-emerald-800/30 text-center">
                 <p class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">{{ days_since }}</p>
-                <p class="text-xs font-medium text-emerald-600 dark:text-brand-400 mt-1">Дней на платформе</p>
+                <p class="text-xs font-medium text-emerald-600 dark:text-brand-400 mt-1">Дней</p>
             </div>
-            <div class="col-span-2 md:col-span-1 bg-amber-50/50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100/50 dark:border-amber-800/30 text-center flex flex-col justify-center">
+            <div class="bg-amber-50/50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100/50 dark:border-amber-800/30 text-center">
                 {% if bmi %}
                 <p class="text-2xl font-extrabold text-amber-700 dark:text-amber-400">{{ bmi }}</p>
-                <p class="text-xs font-medium text-amber-600 dark:text-amber-400 mt-1">{{ bmi_category }}</p>
+                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-1 uppercase">{{ bmi_category }}</p>
                 {% else %}
                 <p class="text-sm font-bold text-amber-700 dark:text-amber-400">ИМТ</p>
-                <p class="text-xs font-medium text-amber-600 dark:text-amber-400 mt-0.5">Укажите рост и вес</p>
+                <p class="text-[10px] font-medium text-amber-600 dark:text-amber-400 mt-1">???</p>
                 {% endif %}
             </div>
+            <div class="bg-indigo-50/50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100/50 dark:border-indigo-800/30 text-center">
+                <p class="text-2xl font-extrabold text-indigo-700 dark:text-indigo-400">
+                    {% if profile.gender == 'male' %}♂{% elif profile.gender == 'female' %}♀{% else %}?{% endif %}
+                </p>
+                <p class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mt-1 uppercase">Профиль</p>
+            </div>
         </div>
+    </div>
+
+    <!-- Блок КБЖУ (Персональные нормы) -->
+    <div class="bg-gradient-to-br from-indigo-600 to-brand-700 rounded-3xl p-6 shadow-xl shadow-indigo-500/20 text-white animate-slide-up">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Мои нормы КБЖУ
+            </h3>
+            <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                {% if macros %}Рассчитано{% else %}Требуются данные{% endif %}
+            </span>
+        </div>
+        
+        {% if macros %}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-center">
+                <p class="text-3xl font-black">{{ macros.calories }}</p>
+                <p class="text-[10px] font-bold text-white/70 uppercase mt-1">Ккал</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-center">
+                <p class="text-3xl font-black">{{ macros.protein }}г</p>
+                <p class="text-[10px] font-bold text-white/70 uppercase mt-1">Белки</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-center">
+                <p class="text-3xl font-black">{{ macros.fats }}г</p>
+                <p class="text-[10px] font-bold text-white/70 uppercase mt-1">Жиры</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-center">
+                <p class="text-3xl font-black">{{ macros.carbs }}г</p>
+                <p class="text-[10px] font-bold text-white/70 uppercase mt-1">Углеводы</p>
+            </div>
+        </div>
+        
+        <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-black/10 border border-white/5">
+            <p class="text-[11px] font-medium text-white/80 text-center sm:text-left">
+                Цель: <span class="font-black text-white">{{ profile.get_goal_display }}</span>. 
+                Нормы рассчитаны программой локально.
+            </p>
+            <a href="{% url 'ai_strategy' %}" class="shrink-0 flex items-center gap-1.5 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-wider transition-all hover:scale-[1.05] active:scale-[0.95]">
+                План от ИИ <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c.5 6 5.5 11 11.5 11.5-6 .5-11 5.5-11.5 11.5-.5-6-5.5-11-11.5-11.5 6-.5 11-5.5 11.5-11.5z"></path></svg>
+            </a>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center py-4 text-center">
+            <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-3">
+                <svg class="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <p class="text-base font-bold mb-1">Недостаточно данных для расчета</p>
+            <p class="text-xs text-indigo-100/70">Пожалуйста, укажите рост, вес, пол и <b>дату рождения</b> в параметрах ниже.</p>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Скрытая форма смены пароля -->
@@ -162,15 +220,66 @@
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Рост (см)</label>
                     {{ form.height }}
+                    {% if form.height.errors %}<p class="text-[10px] text-red-500 font-bold mt-1 ml-1">{{ form.height.errors.0 }}</p>{% endif %}
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Текущий вес (кг)</label>
                     {{ form.current_weight }}
+                    {% if form.current_weight.errors %}<p class="text-[10px] text-red-500 font-bold mt-1 ml-1">{{ form.current_weight.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Пол</label>
+                    <div class="hidden">{{ form.gender }}</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="gender_radio" value="male" class="peer sr-only profile-gender-input" {% if form.gender.value == 'male' %}checked{% endif %}>
+                            <div class="flex items-center justify-center gap-1.5 py-3 rounded-xl border border-gray-100 dark:border-gray-700 peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 peer-checked:text-blue-700 dark:peer-checked:text-blue-400 font-bold text-sm transition-all hover:bg-gray-50 dark:hover:bg-dark-700">
+                                <span>♂️</span> М
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="gender_radio" value="female" class="peer sr-only profile-gender-input" {% if form.gender.value == 'female' %}checked{% endif %}>
+                            <div class="flex items-center justify-center gap-1.5 py-3 rounded-xl border border-gray-100 dark:border-gray-700 peer-checked:border-pink-500 peer-checked:bg-pink-50 dark:peer-checked:bg-pink-900/20 peer-checked:text-pink-700 dark:peer-checked:text-pink-400 font-bold text-sm transition-all hover:bg-gray-50 dark:hover:bg-dark-700">
+                                <span>♀️</span> Ж
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Дата рождения</label>
+                    {{ form.birth_date }}
+                    {% if form.birth_date.errors %}<p class="text-[10px] text-red-500 font-bold mt-1 ml-1">{{ form.birth_date.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Уровень активности</label>
+                <div class="hidden">{{ form.activity_level }}</div>
+                <div class="relative" id="custom-activity-select">
+                    <button type="button" id="activity-trigger" class="w-full flex items-center justify-between bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3.5 text-sm font-bold text-gray-800 dark:text-gray-200 focus:ring-4 focus:ring-brand-500/10 transition-all">
+                        <span id="selected-activity-text" class="flex items-center gap-2">Загрузка...</span>
+                        <svg class="w-4 h-4 text-gray-400 transition-transform duration-300" id="activity-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <div id="activity-options" class="hidden absolute z-30 w-full mt-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl shadow-brand-500/10 overflow-hidden animate-slide-up-sm">
+                        <div class="p-1.5 space-y-0.5">
+                            {% for val, label in form.fields.activity_level.choices %}
+                            <div class="activity-option group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all" data-value="{{ val }}" data-icon="{% if val == 'sedentary' %}🪑{% elif val == 'light' %}🚶‍♂️{% elif val == 'moderate' %}🏃‍♂️{% elif val == 'very_active' %}🏋️‍♂️{% else %}🏔️{% endif %}">
+                                <span class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                                    {% if val == 'sedentary' %}🪑{% elif val == 'light' %}🚶‍♂️{% elif val == 'moderate' %}🏃‍♂️{% elif val == 'very_active' %}🏋️‍♂️{% else %}🏔️{% endif %}
+                                </span>
+                                <span class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ label }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Целевой вес (кг)</label>
                 {{ form.target_weight }}
+                {% if form.target_weight.errors %}<p class="text-[10px] text-red-500 font-bold mt-1 ml-1">{{ form.target_weight.errors.0 }}</p>{% endif %}
             </div>
             <div class="relative">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Главная цель</label>
@@ -390,6 +499,65 @@
 
     // Initial load
     updateDisplay();
+
+    // --- Custom Activity Select Logic ---
+    const activityTrigger = document.getElementById('activity-trigger');
+    const activityOptions = document.getElementById('activity-options');
+    const activityArrow = document.getElementById('activity-arrow');
+    const activityHiddenSelect = document.querySelector('select[name="activity_level"]');
+    const activitySelectedText = document.getElementById('selected-activity-text');
+
+    function updateActivityDisplay() {
+        if (!activityHiddenSelect) return;
+        const val = activityHiddenSelect.value;
+        const activeOption = document.querySelector(`.activity-option[data-value="${val}"]`);
+        if (activeOption) {
+            const icon = activeOption.getAttribute('data-icon');
+            const text = activeOption.querySelector('span:last-child').textContent;
+            activitySelectedText.innerHTML = `<span class="text-lg">${icon}</span> <span>${text}</span>`;
+            
+            document.querySelectorAll('.activity-option').forEach(opt => opt.classList.remove('bg-brand-50', 'dark:bg-brand-900/40', 'ring-1', 'ring-brand-500/30'));
+            activeOption.classList.add('bg-brand-50', 'dark:bg-brand-900/40', 'ring-1', 'ring-brand-500/30');
+        }
+    }
+
+    if (activityTrigger) {
+        activityTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            activityOptions.classList.toggle('hidden');
+            activityArrow.classList.toggle('rotate-180');
+            // Close other dropdowns
+            goalOptions.classList.add('hidden');
+            goalArrow.classList.remove('rotate-180');
+        });
+    }
+
+    document.querySelectorAll('.activity-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const val = this.getAttribute('data-value');
+            activityHiddenSelect.value = val;
+            updateActivityDisplay();
+            activityOptions.classList.add('hidden');
+            activityArrow.classList.remove('rotate-180');
+        });
+    });
+
+    document.addEventListener('click', () => {
+        if (activityOptions) {
+            activityOptions.classList.add('hidden');
+            activityArrow.classList.remove('rotate-180');
+        }
+    });
+
+    // Handle gender sync with hidden select
+    document.querySelectorAll('.profile-gender-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const hiddenGenderSelect = document.querySelector('select[name="gender"]');
+            if (hiddenGenderSelect) hiddenGenderSelect.value = this.value;
+        });
+    });
+
+    updateActivityDisplay();
 </script>
 
 <style>

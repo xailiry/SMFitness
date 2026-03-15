@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}ИИ Стратегия - SMFitness{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 animate-slide-up">
+    <!-- AI Navigation Tabs -->
+    <div class="flex p-1 bg-gray-100/50 dark:bg-dark-900/50 backdrop-blur-md rounded-2xl border border-gray-200/50 dark:border-gray-700/50 w-full sm:w-fit">
+        <a href="{% url 'ai_strategy' %}" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all bg-white dark:bg-dark-800 text-brand-600 dark:text-brand-400 shadow-sm ring-1 ring-black/5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Стратегия</span>
+        </a>
+        <a href="{% url 'ai_journal' %}" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-white/50 dark:hover:bg-dark-800/50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span>Советы</span>
+        </a>
+    </div>
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Персональная ИИ-Стратегия</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">Питание и тренировки, адаптированные под ваши цели</p>
+        </div>
+        
+        {% if strategy %}
+        <button onclick="confirmRegenerate()" {% if not can_update %}disabled{% endif %} 
+            class="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all
+            {% if can_update %}
+                bg-white dark:bg-dark-800 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-900/50 shadow-lg shadow-brand-500/5 hover:scale-[1.02] active:scale-[0.98]
+            {% else %}
+                bg-gray-100 dark:bg-dark-800/50 text-gray-400 cursor-not-allowed opacity-60
+            {% endif %}">
+            <svg class="w-5 h-5 {% if can_update %}animate-spin-slow{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            {% if can_update %}Обновить стратегию{% else %}Доступно через {{ days_until_update }} дн.{% endif %}
+        </button>
+        {% endif %}
+    </div>
+
+    {% if not strategy %}
+    <!-- Empty State / Initial Call -->
+    <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-10 rounded-3xl border border-dashed border-brand-300 dark:border-brand-900/50 text-center space-y-6">
+        <div class="w-20 h-20 bg-brand-50 dark:bg-brand-900/20 rounded-full flex items-center justify-center mx-auto text-brand-600 dark:text-brand-400">
+            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c.5 6 5.5 11 11.5 11.5-6 .5-11 5.5-11.5 11.5-.5-6-5.5-11-11.5-11.5 6-.5 11-5.5 11.5-11.5z"></path></svg>
+        </div>
+        <div class="max-w-sm mx-auto">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Стратегия еще не создана</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">ИИ проанализирует ваши параметры и составит идеальный план питания и тренировок.</p>
+        </div>
+        <button onclick="generateNewStrategy()" class="bg-brand-600 text-white px-10 py-4 rounded-2xl font-black text-lg shadow-2xl shadow-brand-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all">
+            Сгенерировать стратегию 🚀
+        </button>
+    </div>
+    {% else %}
+    <!-- Macros Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700/60 p-5 rounded-2xl shadow-sm">
+            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Калории (ккал)</div>
+            <div class="text-2xl font-black text-gray-800 dark:text-white">{{ strategy.calories }}</div>
+        </div>
+        <div class="bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700/60 p-5 rounded-2xl shadow-sm">
+            <div class="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-1">Белки (г)</div>
+            <div class="text-2xl font-black text-gray-800 dark:text-white">{{ strategy.protein }}</div>
+        </div>
+        <div class="bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700/60 p-5 rounded-2xl shadow-sm">
+            <div class="text-[10px] font-black text-amber-500/80 uppercase tracking-widest mb-1">Жиры (г)</div>
+            <div class="text-2xl font-black text-gray-800 dark:text-white">{{ strategy.fats }}</div>
+        </div>
+        <div class="bg-white dark:bg-dark-800 border border-gray-100 dark:border-gray-700/60 p-5 rounded-2xl shadow-sm">
+            <div class="text-[10px] font-black text-indigo-500/80 uppercase tracking-widest mb-1">Углеводы (г)</div>
+            <div class="text-2xl font-black text-gray-800 dark:text-white">{{ strategy.carbs }}</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Diet Plan -->
+        <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl rounded-3xl border border-white/60 dark:border-gray-700/40 shadow-sm overflow-hidden flex flex-col">
+            <div class="bg-emerald-500/10 p-6 border-b border-emerald-500/10">
+                <h3 class="text-lg font-black text-emerald-700 dark:text-emerald-400 flex items-center gap-2.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
+                    План питания
+                </h3>
+            </div>
+            <div class="p-8 prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                {{ strategy.diet_plan|linebreaks }}
+            </div>
+            <div class="mt-auto p-4 bg-gray-50/50 dark:bg-dark-900/30 border-t border-gray-100 dark:border-gray-700/40 text-[10px] font-bold text-gray-400 text-center uppercase tracking-widest">
+                Обновлено {{ strategy.date_generated|date:"d E Y" }}
+            </div>
+        </div>
+
+        <!-- Workout Strategy -->
+        <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl rounded-3xl border border-white/60 dark:border-gray-700/40 shadow-sm overflow-hidden flex flex-col">
+            <div class="bg-brand-500/10 p-6 border-b border-brand-500/10">
+                <h3 class="text-lg font-black text-brand-700 dark:text-brand-400 flex items-center gap-2.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Стратегия тренировок
+                </h3>
+            </div>
+            <div class="p-8 prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                {{ strategy.workout_strategy|linebreaks }}
+            </div>
+            <div class="mt-auto p-4 bg-gray-50/50 dark:bg-dark-900/30 border-t border-gray-100 dark:border-gray-700/40 text-[10px] font-bold text-gray-400 text-center uppercase tracking-widest">
+                Цель: {{ profile.get_goal_display }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<!-- Modal for Loading / Generating -->
+<div id="loading-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="bg-white dark:bg-dark-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-scale-up">
+        <div class="relative w-20 h-20 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-brand-500/20 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-t-brand-500 rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-8 h-8 text-brand-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c.5 6 5.5 11 11.5 11.5-6 .5-11 5.5-11.5 11.5-.5-6-5.5-11-11.5-11.5 6-.5 11-5.5 11.5-11.5z"></path></svg>
+            </div>
+        </div>
+        <h3 class="text-xl font-black text-gray-800 dark:text-white mb-2">Генерация стратегии...</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400">ИИ составляет ваш идеальный план. Это может занять до 15 секунд.</p>
+    </div>
+</div>
+
+<script>
+    function confirmRegenerate() {
+        showConfirmModal(
+            'Обновить диету?', 
+            'Вы действительно хотите сменить диету? Следующее обновление будет доступно только через неделю.',
+            generateNewStrategy
+        );
+    }
+
+    async function generateNewStrategy() {
+        const modal = document.getElementById('loading-modal');
+        modal.classList.remove('hidden');
+        
+        try {
+            const response = await fetch("{% url 'generate_strategy' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                modal.classList.add('hidden');
+                showNotification(data.error || 'Произошла ошибка', 'error');
+            }
+        } catch (error) {
+            modal.classList.add('hidden');
+            showNotification('Ошибка сети или сервера', 'error');
+        }
+    }
+</script>
+
+<style>
+    .animate-spin-slow {
+        animation: spin 3s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .prose p {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}

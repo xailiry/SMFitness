@@ -3,8 +3,20 @@
 {% block title %}Журнал ИИ-советов - SMFitness{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <div class="mb-6 sm:mb-10 text-center animate-slide-up">
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- AI Navigation Tabs -->
+    <div class="flex p-1 bg-gray-100/50 dark:bg-dark-900/50 backdrop-blur-md rounded-2xl border border-gray-200/50 dark:border-gray-700/50 w-full sm:w-fit animate-slide-up">
+        <a href="{% url 'ai_strategy' %}" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-white/50 dark:hover:bg-dark-800/50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Стратегия</span>
+        </a>
+        <a href="{% url 'ai_journal' %}" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all bg-white dark:bg-dark-800 text-brand-600 dark:text-brand-400 shadow-sm ring-1 ring-black/5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span>Советы</span>
+        </a>
+    </div>
+
+    <div class="pt-2 sm:pt-4 text-center animate-slide-up">
         <div
             class="inline-flex w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg sm:shadow-xl shadow-indigo-500/30 items-center justify-center text-white mb-4 sm:mb-5 animate-float">
             <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
