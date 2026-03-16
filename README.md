@@ -14,11 +14,27 @@ git clone https://github.com/xailiry/SMFitness.git
 cd SMFitness
 ```
 
-Создайте файл `.env` в корневой папке проекта и добавьте туда необходимые переменные (SECRET_KEY, DEBUG=True и т.д.).
+### 2. Настройка окружения
+Создайте файл `.env` в корневой папке проекта и добавьте следующие переменные:
+
+```env
+# Основные настройки Django
+SECRET_KEY=ваш_секретный_ключ (любая длинная случайная строка)
+DEBUG=True
+
+# Настройки ИИ (Google Gemini)
+# Получить ключ можно здесь: https://aistudio.google.com/app/apikey
+GEMINI_API_KEY=ваш_api_ключ_от_gemini
+
+# Настройки безопасности (для продакшена, по умолчанию False)
+# SECURE_SSL_REDIRECT=False
+# SESSION_COOKIE_SECURE=False
+# CSRF_COOKIE_SECURE=False
+```
 
 ---
 
-### 2. Запуск на Windows (CMD или PowerShell)
+### 3. Запуск на Windows (CMD или PowerShell)
 
 1. **Создайте виртуальное окружение:**
    ```bash
@@ -39,7 +55,7 @@ cd SMFitness
 
 ---
 
-### 3. Запуск на macOS / Linux (Терминал)
+### 4. Запуск на macOS / Linux (Терминал)
 
 1. **Создайте виртуальное окружение:**
    ```bash
