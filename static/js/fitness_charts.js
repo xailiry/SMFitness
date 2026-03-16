@@ -3,6 +3,7 @@
  */
 
 const getIsDark = () => document.documentElement.classList.contains('dark');
+const formatNumber = (num) => Math.round(num * 100) / 100;
 
 const initChartDefaults = () => {
     const isDark = getIsDark();

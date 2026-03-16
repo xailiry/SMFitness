@@ -1098,6 +1098,8 @@
     }
 
     function openCustomDropdown() {
+        const widget = document.getElementById('tour-chart');
+        if (widget) widget.style.zIndex = '50';
         customExDropdown.classList.remove('hidden');
         // trigger reflow
         void customExDropdown.offsetWidth;
@@ -1110,6 +1112,7 @@
         customExDropdown.classList.add('scale-95', 'opacity-0');
         setTimeout(() => {
             customExDropdown.classList.add('hidden');
+            checkWidgetZIndex();
         }, 200); // match transition duration
     }
 
@@ -1133,6 +1136,19 @@
             chartTypeOptions.classList.add('hidden');
             if (chartTypeArrow) chartTypeArrow.classList.remove('rotate-180');
         }
+        checkWidgetZIndex();
+    }
+    
+    function checkWidgetZIndex() {
+        const widget = document.getElementById('tour-chart');
+        if (!widget) return;
+        const exOpen = !customExDropdown.classList.contains('hidden');
+        const typeOpen = chartTypeOptions && !chartTypeOptions.classList.contains('hidden');
+        if (!exOpen && !typeOpen) {
+            widget.style.zIndex = '';
+        } else {
+            widget.style.zIndex = '50';
+        }
     }
 
     document.addEventListener('pointerdown', (e) => {
@@ -1145,6 +1161,7 @@
         if (chartTypeContainer && !chartTypeContainer.contains(e.target)) {
             if (chartTypeOptions) chartTypeOptions.classList.add('hidden');
             if (chartTypeArrow) chartTypeArrow.classList.remove('rotate-180');
+            checkWidgetZIndex();
         }
     });
 
@@ -1175,9 +1192,12 @@
                 closeCustomDropdown(); 
                 chartTypeOptions.classList.remove('hidden');
                 chartTypeArrow.classList.add('rotate-180');
+                const widget = document.getElementById('tour-chart');
+                if (widget) widget.style.zIndex = '50';
             } else {
                 chartTypeOptions.classList.add('hidden');
                 chartTypeArrow.classList.remove('rotate-180');
+                checkWidgetZIndex();
             }
         });
     }
@@ -1189,6 +1209,7 @@
             updateChartTypeDisplay();
             chartTypeOptions.classList.add('hidden');
             chartTypeArrow.classList.remove('rotate-180');
+            checkWidgetZIndex();
             updateChart();
         });
     });
@@ -1197,9 +1218,6 @@
     // Initial display update
     updateChartTypeDisplay();
     
-    function formatNumber(num) {
-        return Math.round(num * 10) / 10;
-    }
     
     function drawChart(labels, labelArr, dataArr, config) {
         if (chartInstance) chartInstance.destroy();
@@ -1335,7 +1353,7 @@
             
             const weeks = Object.keys(weeklyMin).sort();
             const mins = weeks.map(w => formatNumber(weeklyMin[w]));
-            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            const readableWeeks = weeks.map(w => getReadableWeek(weekDates[w], parseInt(w.split('-W')[1])));
             
             drawChart(readableWeeks, ['Минуты'], [mins], {
                 type: 'bar',
@@ -1354,7 +1372,7 @@
             
             const weeks = Object.keys(weeklyKm).sort();
             const kms = weeks.map(w => formatNumber(weeklyKm[w]));
-            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            const readableWeeks = weeks.map(w => getReadableWeek(weekDates[w], parseInt(w.split('-W')[1])));
             
             drawChart(readableWeeks, ['Км'], [kms], {
                 type: 'bar',
@@ -1385,7 +1403,7 @@
             });
             const weeks = Object.keys(weeklyFreq).sort();
             const counts = weeks.map(w => weeklyFreq[w]);
-            const readableWeeks = weeks.map(w => formatWeekReadable(w, weekDates[w]));
+            const readableWeeks = weeks.map(w => getReadableWeek(weekDates[w], parseInt(w.split('-W')[1])));
             drawChart(readableWeeks, ['Тренировки'], [counts], {
                 type: 'bar',
                 colors: [{bg: 'rgba(16, 185, 129, 0.8)', border: '#059669'}]
