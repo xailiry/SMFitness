@@ -379,43 +379,43 @@ def dashboard(request):
     except Exception:
         pass
 
-    # Weight Goal Progress (Gamification)
+    # Weight Goal Progress
     weight_progress_pct = None
     weight_goal_reached = False
+    current_weight_val = None
+    start_weight_val = None
     if profile.current_weight and profile.target_weight:
-        # Check initial weight from first workout or registrations (simplified: use first weight ever recorded vs current)
-        # For simplicity, if they entered goal, we show progress.
-        # Let's say we use a simple scale: if goal is to lose weight, then current weight vs target.
-        # We need a 'starting weight' to show real progress bar 0-100%.
-        # For now, let's just use it as "current distance to goal" if we don't have starting weight.
-        # Or better: let's assume progress is based on some reasonable delta.
-        # Actually, the user asked to "обыграть это".
-        
-        # Let's try to find the very first recorded weight for this user
-        first_weight_record = Workout.objects.filter(user=request.user).order_by('date').first()
-        # If no workouts yet, start weight is the weight they registered with??
-        # But current_weight updates. So we might need a separate field for 'initial_weight'.
-        # For now: if mass goal: pct = (current / target) * 100. If cut goal: pct = (target / current) * 100.
-        
         curr = float(profile.current_weight)
         target = float(profile.target_weight)
         weight_diff = round(abs(curr - target), 1)
-        
+        current_weight_val = curr
+        start_weight_val = curr  # fallback
+
+        # Use first WeightLog as the real starting point for progress %
+        first_log = WeightLog.objects.filter(user=request.user).order_by('date').first()
+        if first_log:
+            start_weight_val = float(first_log.weight)
+
         if profile.goal == 'cut':
             if curr <= target:
                 weight_progress_pct = 100
                 weight_goal_reached = True
             else:
-                weight_progress_pct = max(0, min(100, int((target / curr) * 100)))
+                journey = start_weight_val - target
+                done = start_weight_val - curr
+                weight_progress_pct = max(0, min(100, int(done / journey * 100))) if journey > 0 else 0
         elif profile.goal == 'mass':
             if curr >= target:
                 weight_progress_pct = 100
                 weight_goal_reached = True
             else:
-                weight_progress_pct = max(0, min(100, int((curr / target) * 100)))
+                journey = target - start_weight_val
+                done = curr - start_weight_val
+                weight_progress_pct = max(0, min(100, int(done / journey * 100))) if journey > 0 else 0
         else:
-            weight_progress_pct = 100 if weight_diff < 0.5 else int((min(curr, target) / max(curr, target)) * 100)
-            if weight_diff < 0.5: weight_goal_reached = True
+            weight_progress_pct = 100 if weight_diff < 0.5 else 50
+            if weight_diff < 0.5:
+                weight_goal_reached = True
 
     # Automatic Weight Logging (if weight changed and no log today)
     if profile.current_weight:
@@ -581,6 +581,10 @@ def dashboard(request):
         'weight_goal_reached': weight_goal_reached,
         'weight_diff': weight_diff if 'weight_diff' in locals() else None,
         'target_weight': profile.target_weight,
+        'current_weight': current_weight_val,
+        'start_weight': start_weight_val,
+        'goal_display': profile.get_goal_display() if profile.goal else None,
+        'goal_type': profile.goal,
         'plateau_message': plateau_message,
         'prediction_date': prediction_date,
         'macros': macros,
