@@ -294,56 +294,56 @@
     {% if user.is_authenticated %}
     <div
         class="sm:hidden fixed bottom-0 left-0 right-0 z-50 glass border-t border-gray-200/50 dark:border-gray-700/50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <div class="flex justify-around items-center h-14 px-2">
+        <div class="flex justify-around items-center h-16 px-1" style="padding-bottom: env(safe-area-inset-bottom, 0px)">
             <a href="{% url 'dashboard' %}"
-                class="flex flex-col items-center gap-0.5 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors p-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors px-3 py-2 rounded-xl active:bg-brand-50 dark:active:bg-brand-900/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
                     </path>
                 </svg>
-                <span class="text-[10px] font-medium">Журнал</span>
+                <span class="text-xs font-medium">Журнал</span>
             </a>
             <a href="{% url 'statistics' %}"
-                class="flex flex-col items-center gap-0.5 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors p-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors px-3 py-2 rounded-xl active:bg-brand-50 dark:active:bg-brand-900/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                     </path>
                 </svg>
-                <span class="text-[10px] font-medium">Графики</span>
+                <span class="text-xs font-medium">Графики</span>
             </a>
             <a href="{% url 'ai_strategy' %}"
-                class="flex flex-col items-center gap-0.5 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1">
+                class="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors px-3 py-2 rounded-xl active:bg-purple-50 dark:active:bg-purple-900/20">
                 <div class="relative">
-                    <svg class="w-5 h-5 mx-auto text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 mx-auto text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 0c.5 6 5.5 11 11.5 11.5-6 .5-11 5.5-11.5 11.5-.5-6-5.5-11-11.5-11.5 6-.5 11-5.5 11.5-11.5z"></path>
                     </svg>
                     {% if not user.ai_strategy %}
                     <span class="absolute -top-1 -right-1 h-2 w-2 bg-purple-500 rounded-full border-2 border-white dark:border-dark-900"></span>
                     {% endif %}
                 </div>
-                <span class="text-[10px] font-bold">ИИ Раздел</span>
+                <span class="text-xs font-bold">ИИ</span>
             </a>
             <a href="{% url 'profile' %}"
-                class="flex flex-col items-center gap-0.5 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors p-1">
-                <div class="w-5 h-5 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 relative">
+                class="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors px-3 py-2 rounded-xl active:bg-brand-50 dark:active:bg-brand-900/20">
+                <div class="w-6 h-6 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 relative">
                     {% if user.profile.avatar %}
                         <img src="{{ user.profile.avatar.url }}" alt="Ava" class="w-full h-full object-cover">
                     {% else %}
-                        <div class="w-full h-full bg-brand-500 flex items-center justify-center text-white text-[8px] font-black">
+                        <div class="w-full h-full bg-brand-500 flex items-center justify-center text-white text-[9px] font-black">
                             {{ user.username|first|upper }}
                         </div>
                     {% endif %}
                 </div>
-                <span class="text-[10px] font-medium">Профиль</span>
+                <span class="text-xs font-medium">Профиль</span>
             </a>
         </div>
     </div>
     {% endif %}
 
     <main
-        class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 animate-fade-in relative z-10 {% if user.is_authenticated %}pb-20 sm:pb-10{% endif %}">
+        class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in relative z-10 {% if user.is_authenticated %}pb-24 sm:pb-10{% endif %}">
         {% block content %}{% endblock %}
     </main>
 
