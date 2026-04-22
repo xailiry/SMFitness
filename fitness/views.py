@@ -391,12 +391,12 @@ def dashboard(request):
         current_weight_val = curr
         start_weight_val = curr  # fallback
 
-        # Use first WeightLog as the real starting point for progress %
-        first_log = WeightLog.objects.filter(user=request.user).order_by('date').first()
-        if first_log:
-            start_weight_val = float(first_log.weight)
-
+        logs_qs = WeightLog.objects.filter(user=request.user)
         if profile.goal == 'cut':
+            # Start from the heaviest recorded weight
+            peak = logs_qs.order_by('-weight').first()
+            if peak:
+                start_weight_val = float(peak.weight)
             if curr <= target:
                 weight_progress_pct = 100
                 weight_goal_reached = True
@@ -405,6 +405,10 @@ def dashboard(request):
                 done = start_weight_val - curr
                 weight_progress_pct = max(0, min(100, int(done / journey * 100))) if journey > 0 else 0
         elif profile.goal == 'mass':
+            # Start from the lightest recorded weight
+            low = logs_qs.order_by('weight').first()
+            if low:
+                start_weight_val = float(low.weight)
             if curr >= target:
                 weight_progress_pct = 100
                 weight_goal_reached = True
@@ -419,7 +423,6 @@ def dashboard(request):
 
     # Automatic Weight Logging (if weight changed and no log today)
     if profile.current_weight:
-        from .models import WeightLog
         today_date = timezone.now().date()
         last_log = WeightLog.objects.filter(user=request.user, date=today_date).first()
         if not last_log or last_log.weight != profile.current_weight:
