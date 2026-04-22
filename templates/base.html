@@ -140,21 +140,28 @@
         /* ═══════════════════════════════════════════════════
            Intro.js — кастомный фирменный стиль туториала
            ═══════════════════════════════════════════════════ */
-        /* Штатный оверлей intro.js затемняем, но БЕЗ блюра —
-           иначе подсвеченный элемент тоже блюрится */
+        /* Оверлей — это фолбэк для шага без целевого элемента
+           (в нормальных шагах затемнение делает шадоу helperLayer) */
         .introjs-overlay {
             background: rgba(8, 12, 22, 0.7) !important;
             opacity: 1 !important;
         }
 
-        /* Рамка-ореол вокруг выделяемого элемента */
+        /* Когда подсвечивается конкретный элемент — убираем полный
+           оверлей: затемнение создаст сам helperLayer через box-shadow */
+        body:has(.introjs-helperLayer):not(:has(.introjs-showElement.introjs-floating)) .introjs-overlay {
+            background: transparent !important;
+        }
+
+        /* Рамка-прожектор: прозрачная внутри (элемент чистый),
+           огромная тень снаружи = затемнение всего вокруг */
         .introjs-helperLayer {
             border-radius: 16px !important;
             background: transparent !important;
             box-shadow:
                 0 0 0 3px rgba(59, 130, 246, 0.9),
-                0 0 0 8px rgba(59, 130, 246, 0.25),
-                0 20px 50px rgba(0, 0, 0, 0.5) !important;
+                0 0 0 8px rgba(59, 130, 246, 0.22),
+                0 0 0 9999px rgba(8, 12, 22, 0.7) !important;
             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
