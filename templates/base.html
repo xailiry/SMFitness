@@ -136,6 +136,247 @@
         #toast-container > div {
             pointer-events: auto;
         }
+
+        /* ═══════════════════════════════════════════════════
+           Intro.js — кастомный фирменный стиль туториала
+           ═══════════════════════════════════════════════════ */
+        .introjs-overlay {
+            background: radial-gradient(ellipse at center, rgba(15,23,42,0.45) 0%, rgba(15,23,42,0.75) 100%) !important;
+            opacity: 1 !important;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+
+        .introjs-helperLayer {
+            border-radius: 16px !important;
+            box-shadow: rgba(37, 99, 235, 0.35) 0 0 0 4px, rgba(37, 99, 235, 0.15) 0 0 0 8px, rgba(15, 23, 42, 0.25) 0 20px 40px !important;
+        }
+
+        .introjs-tooltip {
+            min-width: 320px !important;
+            max-width: 420px !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 18px !important;
+            box-shadow:
+                0 1px 0 rgba(255,255,255,0.9) inset,
+                0 0 0 1px rgba(15,23,42,0.04),
+                0 20px 50px -12px rgba(15,23,42,0.35),
+                0 8px 16px -6px rgba(15,23,42,0.15) !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            animation: introjsFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            overflow: hidden;
+        }
+
+        .dark .introjs-tooltip {
+            background: #1a2234 !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #334155 !important;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.04) inset,
+                0 20px 50px -12px rgba(0,0,0,0.7),
+                0 8px 16px -6px rgba(0,0,0,0.5) !important;
+        }
+
+        @keyframes introjsFadeIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .introjs-tooltip::before {
+            content: "";
+            position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #7c3aed, #ec4899);
+        }
+
+        .introjs-tooltip-header {
+            padding: 18px 22px 0 !important;
+            min-height: auto !important;
+        }
+
+        .introjs-tooltip-title {
+            font-size: 1.05rem !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            line-height: 1.3 !important;
+        }
+        .dark .introjs-tooltip-title { color: #f8fafc !important; }
+
+        .introjs-tooltiptext {
+            padding: 14px 22px 18px !important;
+            font-size: 0.95rem !important;
+            line-height: 1.55 !important;
+            color: #334155 !important;
+            font-weight: 500 !important;
+        }
+        .dark .introjs-tooltiptext { color: #cbd5e1 !important; }
+
+        /* Progress bar */
+        .introjs-progress {
+            height: 4px !important;
+            margin: 0 22px 14px !important;
+            background: #e2e8f0 !important;
+            border-radius: 999px !important;
+            overflow: hidden;
+        }
+        .dark .introjs-progress { background: #334155 !important; }
+
+        .introjs-progressbar {
+            height: 100% !important;
+            background: linear-gradient(90deg, #3b82f6, #7c3aed) !important;
+            border-radius: 999px !important;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        /* Bullets */
+        .introjs-bullets {
+            padding: 0 22px 14px !important;
+        }
+        .introjs-bullets ul li a {
+            background: #cbd5e1 !important;
+            width: 7px !important; height: 7px !important;
+        }
+        .introjs-bullets ul li a.active {
+            background: #2563eb !important;
+            width: 18px !important; border-radius: 999px !important;
+        }
+        .dark .introjs-bullets ul li a { background: #475569 !important; }
+        .dark .introjs-bullets ul li a.active { background: #60a5fa !important; }
+
+        /* Buttons row */
+        .introjs-tooltipbuttons {
+            padding: 12px 18px 18px !important;
+            border-top: 1px solid #e2e8f0 !important;
+            background: #f8fafc !important;
+            display: flex !important;
+            gap: 8px !important;
+            justify-content: space-between !important;
+        }
+        .dark .introjs-tooltipbuttons {
+            border-top-color: #334155 !important;
+            background: #131a29 !important;
+        }
+
+        .introjs-button {
+            padding: 9px 18px !important;
+            border-radius: 10px !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            font-family: inherit !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
+            text-shadow: none !important;
+            background-image: none !important;
+        }
+
+        .introjs-prevbutton {
+            background: #ffffff !important;
+            color: #475569 !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        .introjs-prevbutton:hover:not(.introjs-disabled) {
+            background: #f1f5f9 !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        .dark .introjs-prevbutton {
+            background: #1e293b !important;
+            color: #cbd5e1 !important;
+            border: 1px solid #475569 !important;
+        }
+        .dark .introjs-prevbutton:hover:not(.introjs-disabled) {
+            background: #334155 !important;
+            border-color: #64748b !important;
+            color: #f1f5f9 !important;
+        }
+
+        .introjs-nextbutton, .introjs-donebutton {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
+        }
+        .introjs-nextbutton:hover, .introjs-donebutton:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5) !important;
+            transform: translateY(-1px);
+        }
+
+        .introjs-disabled {
+            opacity: 0.4 !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+
+        /* Skip (X) button */
+        .introjs-skipbutton {
+            position: absolute !important;
+            top: 14px !important; right: 14px !important;
+            padding: 0 !important;
+            width: 28px !important; height: 28px !important;
+            border-radius: 8px !important;
+            background: transparent !important;
+            color: #94a3b8 !important;
+            font-size: 1.2rem !important;
+            line-height: 1 !important;
+            border: none !important;
+            display: grid !important;
+            place-items: center !important;
+            z-index: 2;
+        }
+        .introjs-skipbutton:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+        .dark .introjs-skipbutton:hover {
+            background: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+
+        /* Arrow */
+        .introjs-arrow.top     { border-bottom-color: #ffffff !important; }
+        .introjs-arrow.bottom  { border-top-color: #ffffff !important; }
+        .introjs-arrow.left    { border-right-color: #ffffff !important; }
+        .introjs-arrow.right   { border-left-color: #ffffff !important; }
+        .dark .introjs-arrow.top     { border-bottom-color: #1a2234 !important; }
+        .dark .introjs-arrow.bottom  { border-top-color: #1a2234 !important; }
+        .dark .introjs-arrow.left    { border-right-color: #1a2234 !important; }
+        .dark .introjs-arrow.right   { border-left-color: #1a2234 !important; }
+
+        /* Mobile responsive */
+        @media (max-width: 640px) {
+            .introjs-tooltip {
+                min-width: 0 !important;
+                max-width: calc(100vw - 32px) !important;
+                width: calc(100vw - 32px) !important;
+                margin: 0 16px !important;
+                border-radius: 16px !important;
+            }
+            .introjs-tooltip-header { padding: 16px 18px 0 !important; }
+            .introjs-tooltip-title { font-size: 1rem !important; }
+            .introjs-tooltiptext {
+                padding: 12px 18px 16px !important;
+                font-size: 0.92rem !important;
+                line-height: 1.5 !important;
+            }
+            .introjs-progress, .introjs-bullets { padding-left: 18px !important; padding-right: 18px !important; margin-left: 18px !important; margin-right: 18px !important; }
+            .introjs-tooltipbuttons {
+                padding: 10px 14px 14px !important;
+                gap: 6px !important;
+            }
+            .introjs-button {
+                padding: 10px 14px !important;
+                font-size: 0.88rem !important;
+                flex: 1;
+                text-align: center;
+            }
+            .introjs-skipbutton {
+                top: 10px !important;
+                right: 10px !important;
+            }
+        }
     </style>
     <!-- Django Messages bridge -->
     <div id="django-messages" class="hidden" data-messages='[{% for message in messages %}{"text": "{{ message|escapejs }}", "tags": "{{ message.tags }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'></div>
