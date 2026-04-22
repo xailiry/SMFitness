@@ -1,0 +1,731 @@
+[
+  {
+    "model": "fitness.exercise",
+    "pk": 11,
+    "fields": {
+      "name": "Жим штанги лёжа",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 12,
+    "fields": {
+      "name": "Жим гантелей лёжа",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 13,
+    "fields": {
+      "name": "Жим штанги на наклонной скамье",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 14,
+    "fields": {
+      "name": "Жим гантелей на наклонной скамье",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 15,
+    "fields": {
+      "name": "Разведение гантелей лёжа",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 16,
+    "fields": {
+      "name": "Сведение рук в кроссовере",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 17,
+    "fields": {
+      "name": "Отжимания от пола",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 18,
+    "fields": {
+      "name": "Отжимания на брусьях",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 19,
+    "fields": {
+      "name": "Пулловер с гантелью",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 20,
+    "fields": {
+      "name": "Жим в тренажёре Смита",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 21,
+    "fields": {
+      "name": "Становая тяга",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 22,
+    "fields": {
+      "name": "Тяга штанги в наклоне",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 23,
+    "fields": {
+      "name": "Тяга гантели в наклоне",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 24,
+    "fields": {
+      "name": "Подтягивания широким хватом",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 25,
+    "fields": {
+      "name": "Подтягивания узким хватом",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 26,
+    "fields": {
+      "name": "Тяга верхнего блока к груди",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 27,
+    "fields": {
+      "name": "Тяга верхнего блока за голову",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 28,
+    "fields": {
+      "name": "Тяга нижнего блока к поясу",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 29,
+    "fields": {
+      "name": "Гиперэкстензия",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 30,
+    "fields": {
+      "name": "Тяга Т-грифа",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 31,
+    "fields": {
+      "name": "Шраги со штангой",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 32,
+    "fields": {
+      "name": "Шраги с гантелями",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 33,
+    "fields": {
+      "name": "Жим штанги стоя (армейский)",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 34,
+    "fields": {
+      "name": "Жим гантелей сидя",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 35,
+    "fields": {
+      "name": "Жим Арнольда",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 36,
+    "fields": {
+      "name": "Разведение гантелей в стороны",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 37,
+    "fields": {
+      "name": "Подъём гантелей перед собой",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 38,
+    "fields": {
+      "name": "Разведение гантелей в наклоне",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 39,
+    "fields": {
+      "name": "Тяга штанги к подбородку",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 40,
+    "fields": {
+      "name": "Жим из-за головы",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 41,
+    "fields": {
+      "name": "Подъём штанги на бицепс стоя",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 42,
+    "fields": {
+      "name": "Подъём гантелей на бицепс стоя",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 43,
+    "fields": {
+      "name": "Молотковые сгибания (Молот)",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 44,
+    "fields": {
+      "name": "Подъём штанги на скамье Скотта",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 45,
+    "fields": {
+      "name": "Сгибания на нижнем блоке",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 46,
+    "fields": {
+      "name": "Концентрированные сгибания",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 47,
+    "fields": {
+      "name": "Подъём EZ-штанги на бицепс",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 48,
+    "fields": {
+      "name": "Жим штанги узким хватом",
+      "description": null,
+      "muscle_group": "triceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 49,
+    "fields": {
+      "name": "Французский жим лёжа",
+      "description": null,
+      "muscle_group": "triceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 50,
+    "fields": {
+      "name": "Французский жим стоя с гантелью",
+      "description": null,
+      "muscle_group": "triceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 51,
+    "fields": {
+      "name": "Разгибание рук на верхнем блоке",
+      "description": null,
+      "muscle_group": "triceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 52,
+    "fields": {
+      "name": "Разгибание рук с канатом",
+      "description": null,
+      "muscle_group": "triceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 53,
+    "fields": {
+      "name": "Обратные отжимания от скамьи",
+      "description": null,
+      "muscle_group": "triceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 54,
+    "fields": {
+      "name": "Кик-бэк с гантелью",
+      "description": null,
+      "muscle_group": "triceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 55,
+    "fields": {
+      "name": "Приседания со штангой",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 56,
+    "fields": {
+      "name": "Фронтальные приседания",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 57,
+    "fields": {
+      "name": "Гакк-приседания",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 58,
+    "fields": {
+      "name": "Жим ногами в тренажёре",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 59,
+    "fields": {
+      "name": "Выпады с гантелями",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 60,
+    "fields": {
+      "name": "Выпады со штангой",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 61,
+    "fields": {
+      "name": "Болгарские выпады",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 62,
+    "fields": {
+      "name": "Разгибание ног в тренажёре",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 63,
+    "fields": {
+      "name": "Сгибание ног в тренажёре",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 64,
+    "fields": {
+      "name": "Румынская тяга",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 65,
+    "fields": {
+      "name": "Подъёмы на носки стоя",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 66,
+    "fields": {
+      "name": "Подъёмы на носки сидя",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 67,
+    "fields": {
+      "name": "Приседания в тренажёре Смита",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 68,
+    "fields": {
+      "name": "Ягодичный мост со штангой",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 69,
+    "fields": {
+      "name": "Скручивания на полу",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 70,
+    "fields": {
+      "name": "Скручивания на наклонной скамье",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 71,
+    "fields": {
+      "name": "Подъём ног в висе",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 72,
+    "fields": {
+      "name": "Подъём ног лёжа",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 73,
+    "fields": {
+      "name": "Планка",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 74,
+    "fields": {
+      "name": "Боковая планка",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 75,
+    "fields": {
+      "name": "Велосипед (пресс)",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 76,
+    "fields": {
+      "name": "Скручивания на блоке (молитва)",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 77,
+    "fields": {
+      "name": "Русский твист",
+      "description": null,
+      "muscle_group": "abs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 78,
+    "fields": {
+      "name": "Бег на дорожке",
+      "description": null,
+      "muscle_group": "cardio"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 79,
+    "fields": {
+      "name": "Велотренажёр",
+      "description": null,
+      "muscle_group": "cardio"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 80,
+    "fields": {
+      "name": "Эллиптический тренажёр",
+      "description": null,
+      "muscle_group": "cardio"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 81,
+    "fields": {
+      "name": "Гребной тренажёр",
+      "description": null,
+      "muscle_group": "cardio"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 82,
+    "fields": {
+      "name": "Прыжки на скакалке",
+      "description": null,
+      "muscle_group": "cardio"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 83,
+    "fields": {
+      "name": "Берпи",
+      "description": null,
+      "muscle_group": "cardio"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 84,
+    "fields": {
+      "name": "Ходьба на дорожке (наклон)",
+      "description": null,
+      "muscle_group": "cardio"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 85,
+    "fields": {
+      "name": "Жим лежа",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 86,
+    "fields": {
+      "name": "Приседания",
+      "description": null,
+      "muscle_group": "legs"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 87,
+    "fields": {
+      "name": "Подтягивания",
+      "description": null,
+      "muscle_group": "back"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 88,
+    "fields": {
+      "name": "Армейский жим",
+      "description": null,
+      "muscle_group": "shoulders"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 89,
+    "fields": {
+      "name": "Подъем на бицепс",
+      "description": null,
+      "muscle_group": "biceps"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 90,
+    "fields": {
+      "name": "Жим гантелей",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  },
+  {
+    "model": "fitness.exercise",
+    "pk": 91,
+    "fields": {
+      "name": "Разведение гантелей",
+      "description": null,
+      "muscle_group": "chest"
+    }
+  }
+]
