@@ -140,16 +140,22 @@
         /* ═══════════════════════════════════════════════════
            Intro.js — кастомный фирменный стиль туториала
            ═══════════════════════════════════════════════════ */
+        /* Штатный оверлей intro.js затемняем, но БЕЗ блюра —
+           иначе подсвеченный элемент тоже блюрится */
         .introjs-overlay {
-            background: radial-gradient(ellipse at center, rgba(15,23,42,0.45) 0%, rgba(15,23,42,0.75) 100%) !important;
+            background: rgba(8, 12, 22, 0.7) !important;
             opacity: 1 !important;
-            backdrop-filter: blur(3px);
-            -webkit-backdrop-filter: blur(3px);
         }
 
+        /* Рамка-ореол вокруг выделяемого элемента */
         .introjs-helperLayer {
             border-radius: 16px !important;
-            box-shadow: rgba(37, 99, 235, 0.35) 0 0 0 4px, rgba(37, 99, 235, 0.15) 0 0 0 8px, rgba(15, 23, 42, 0.25) 0 20px 40px !important;
+            background: transparent !important;
+            box-shadow:
+                0 0 0 3px rgba(59, 130, 246, 0.9),
+                0 0 0 8px rgba(59, 130, 246, 0.25),
+                0 20px 50px rgba(0, 0, 0, 0.5) !important;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
         .introjs-tooltip {
