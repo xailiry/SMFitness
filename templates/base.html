@@ -358,36 +358,68 @@
         .dark .introjs-arrow.left    { border-right-color: #1a2234 !important; }
         .dark .introjs-arrow.right   { border-left-color: #1a2234 !important; }
 
-        /* Mobile responsive */
+        /* ─── Mobile ─────────────────────────────────────────
+           На мобилках интро.js считает позицию тултипа неверно
+           (узкий экран + разные браузеры) — приклеиваем его
+           фиксированно к нижней части экрана. */
         @media (max-width: 640px) {
+            .introjs-tooltipReferenceLayer {
+                position: fixed !important;
+                top: auto !important;
+                bottom: 16px !important;
+                left: 12px !important;
+                right: 12px !important;
+                width: auto !important;
+                height: auto !important;
+                transform: none !important;
+            }
             .introjs-tooltip {
+                position: static !important;
                 min-width: 0 !important;
-                max-width: calc(100vw - 32px) !important;
-                width: calc(100vw - 32px) !important;
-                margin: 0 16px !important;
+                max-width: none !important;
+                width: 100% !important;
+                margin: 0 !important;
                 border-radius: 16px !important;
+                left: auto !important;
+                top: auto !important;
+                right: auto !important;
             }
             .introjs-tooltip-header { padding: 16px 18px 0 !important; }
-            .introjs-tooltip-title { font-size: 1rem !important; }
+            .introjs-tooltip-title { font-size: 1rem !important; padding-right: 36px !important; }
             .introjs-tooltiptext {
-                padding: 12px 18px 16px !important;
+                padding: 12px 18px 14px !important;
                 font-size: 0.92rem !important;
                 line-height: 1.5 !important;
             }
-            .introjs-progress, .introjs-bullets { padding-left: 18px !important; padding-right: 18px !important; margin-left: 18px !important; margin-right: 18px !important; }
+            .introjs-progress {
+                margin: 0 18px 12px !important;
+            }
             .introjs-tooltipbuttons {
                 padding: 10px 14px 14px !important;
                 gap: 6px !important;
+                display: flex !important;
             }
             .introjs-button {
                 padding: 10px 14px !important;
-                font-size: 0.88rem !important;
-                flex: 1;
-                text-align: center;
+                font-size: 0.9rem !important;
+                flex: 1 !important;
+                text-align: center !important;
             }
             .introjs-skipbutton {
                 top: 10px !important;
                 right: 10px !important;
+            }
+            /* Стрелка на мобилках не нужна — тултип отвязан от позиции */
+            .introjs-arrow { display: none !important; }
+
+            /* Оверлей отключаем — затемнение всё равно делает helperLayer,
+               а поверх него теперь сидит fixed тултип */
+            .introjs-tooltipReferenceLayer .introjs-tooltip {
+                box-shadow:
+                    0 1px 0 rgba(255,255,255,0.9) inset,
+                    0 0 0 1px rgba(15,23,42,0.06),
+                    0 12px 30px -8px rgba(0,0,0,0.4),
+                    0 28px 60px -12px rgba(0,0,0,0.5) !important;
             }
         }
     </style>
