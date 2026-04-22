@@ -3,29 +3,29 @@
 {% block title %}Аналитика - SMFitness{% endblock %}
 
 {% block content %}
-<div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
-        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Аналитика</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1">Подробная статистика ваших тренировок</p>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Аналитика</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Подробная статистика ваших тренировок</p>
     </div>
-    
+
     <!-- Фильтры периодов -->
-    <div class="flex bg-gray-100 dark:bg-dark-700 p-1 rounded-xl self-start sm:self-center">
-        <button onclick="changePeriod('week')" id="btn-period-week" 
-            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
-            НЕДЕЛЯ
+    <div class="flex bg-gray-100 dark:bg-dark-700 p-1 rounded-xl self-start sm:self-center overflow-x-auto shrink-0">
+        <button onclick="changePeriod('week')" id="btn-period-week"
+            class="period-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 whitespace-nowrap">
+            НЕД
         </button>
-        <button onclick="changePeriod('month')" id="btn-period-month" 
-            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
-            МЕСЯЦ
+        <button onclick="changePeriod('month')" id="btn-period-month"
+            class="period-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 whitespace-nowrap">
+            МЕС
         </button>
-        <button onclick="changePeriod('3months')" id="btn-period-3months" 
-            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
-            3 МЕСЯЦА
+        <button onclick="changePeriod('3months')" id="btn-period-3months"
+            class="period-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 whitespace-nowrap">
+            3 МЕС
         </button>
-        <button onclick="changePeriod('all')" id="btn-period-all" 
-            class="period-btn px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-dark-600 shadow-sm text-brand-600 dark:text-brand-400">
-            ВСЁ ВРЕМЯ
+        <button onclick="changePeriod('all')" id="btn-period-all"
+            class="period-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-dark-600 shadow-sm text-brand-600 dark:text-brand-400 whitespace-nowrap">
+            ВСЁ
         </button>
     </div>
 </div>
@@ -36,7 +36,7 @@
     <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
         <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">⚖️ Динамика веса тела</h3>
         <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Изменение вашего веса (кг) со временем</p>
-        <div class="relative h-[280px]"><canvas id="bodyWeightChart"></canvas></div>
+        <div class="relative h-[200px] sm:h-[280px]"><canvas id="bodyWeightChart"></canvas></div>
         <div id="noBodyWeightData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных о весе</p></div>
     </div>
 
@@ -69,28 +69,28 @@
                 </ul>
             </div>
         </div>
-        <div class="relative h-[280px]"><canvas id="weightChart"></canvas></div>
+        <div class="relative h-[200px] sm:h-[280px]"><canvas id="weightChart"></canvas></div>
         <div id="noWeightData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных</p></div>
     </div>
 
     <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
         <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">📊 Объём тренировок по неделям</h3>
         <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Суммарный объём (подходы × повторения × вес) за неделю</p>
-        <div class="relative h-[300px]"><canvas id="volumeChart"></canvas></div>
+        <div class="relative h-[220px] sm:h-[300px]"><canvas id="volumeChart"></canvas></div>
         <div id="noVolumeData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных</p></div>
     </div>
 
     <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40">
         <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">🗓️ Частота по дням недели</h3>
         <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">В какие дни вы тренируетесь чаще всего</p>
-        <div class="relative h-[300px]"><canvas id="freqChart"></canvas></div>
+        <div class="relative h-[220px] sm:h-[300px]"><canvas id="freqChart"></canvas></div>
         <div id="noFreqData" class="hidden flex items-center justify-center h-[200px]"><p class="text-xs text-gray-400 dark:text-gray-500">Нет данных</p></div>
     </div>
 
     <div class="bg-white/80 dark:bg-dark-800/70 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-white/60 dark:border-gray-700/40 relative overflow-hidden">
         <h3 class="font-extrabold text-gray-900 dark:text-white mb-1">🏋️ Распределение по мышечным группам</h3>
         <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Нагрузка по группам мышц (по повторениям)</p>
-        <div class="relative h-[300px]">
+        <div class="relative h-[220px] sm:h-[300px]">
             <canvas id="muscleChart"></canvas>
             <!-- Custom HTML Tooltip Container -->
             <div id="muscle-tooltip" class="absolute bg-white/90 dark:bg-dark-800/90 backdrop-blur-md border border-gray-100 dark:border-gray-700 p-3 rounded-xl shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-50 min-w-[120px]"></div>
