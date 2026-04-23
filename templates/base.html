@@ -359,67 +359,110 @@
         .dark .introjs-arrow.right   { border-left-color: #1a2234 !important; }
 
         /* ─── Mobile ─────────────────────────────────────────
-           На мобилках интро.js считает позицию тултипа неверно
-           (узкий экран + разные браузеры) — приклеиваем его
-           фиксированно к нижней части экрана. */
+           На мобилках intro.js плохо считает позицию тултипа
+           (узкий экран, динамическая адресная строка iOS Safari).
+           Решение: рендерим тултип как bottom-sheet — приклеиваем
+           к низу viewport, ширина = весь экран минус отступы.
+
+           ВАЖНО: intro.js пишет inline `top:`, `left:`, `width:`,
+           `height:` прямо в .introjs-tooltipReferenceLayer и в
+           .introjs-tooltip — поэтому каждое свойство нужно бить
+           !important'ом. */
         @media (max-width: 640px) {
+            /* 1. Контейнер-обёртка — фиксируем у нижней кромки экрана.
+                  Использует safe-area-inset для iPhone с челкой/home-bar. */
             .introjs-tooltipReferenceLayer {
                 position: fixed !important;
                 top: auto !important;
-                bottom: 16px !important;
-                left: 12px !important;
-                right: 12px !important;
-                width: auto !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100vw !important;
                 height: auto !important;
+                max-height: 70vh !important;
                 transform: none !important;
+                margin: 0 !important;
+                padding: 0 12px calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+                box-sizing: border-box !important;
+                pointer-events: none;
+                z-index: 9999999 !important;
             }
-            .introjs-tooltip {
-                position: static !important;
+
+            /* 2. Сам тултип — обычный flex-блок внутри обёртки.
+                  Никаких absolute/transform от intro.js. */
+            .introjs-tooltipReferenceLayer .introjs-tooltip {
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+                margin: 0 !important;
+                width: 100% !important;
                 min-width: 0 !important;
                 max-width: none !important;
-                width: 100% !important;
+                max-height: 70vh !important;
+                overflow-y: auto !important;
+                display: flex !important;
+                flex-direction: column !important;
+                border-radius: 18px !important;
+                pointer-events: auto;
+                box-shadow:
+                    0 1px 0 rgba(255,255,255,0.9) inset,
+                    0 0 0 1px rgba(15,23,42,0.06),
+                    0 -8px 30px -8px rgba(0,0,0,0.35),
+                    0 -20px 60px -12px rgba(0,0,0,0.45) !important;
+            }
+
+            /* 3. Внутренние блоки — гарантируем что они видимы и в потоке */
+            .introjs-tooltip-header {
+                position: relative !important;
+                padding: 18px 44px 0 18px !important;
+                display: block !important;
+            }
+            .introjs-tooltip-title {
+                font-size: 1.05rem !important;
+                line-height: 1.3 !important;
                 margin: 0 !important;
-                border-radius: 16px !important;
-                left: auto !important;
-                top: auto !important;
-                right: auto !important;
+                display: block !important;
             }
-            .introjs-tooltip-header { padding: 16px 18px 0 !important; }
-            .introjs-tooltip-title { font-size: 1rem !important; padding-right: 36px !important; }
             .introjs-tooltiptext {
-                padding: 12px 18px 14px !important;
-                font-size: 0.92rem !important;
+                padding: 10px 18px 14px !important;
+                font-size: 0.93rem !important;
                 line-height: 1.5 !important;
+                display: block !important;
             }
-            .introjs-progress {
-                margin: 0 18px 12px !important;
+            .introjs-bullets, .introjs-progress {
+                margin: 0 18px 10px !important;
             }
             .introjs-tooltipbuttons {
                 padding: 10px 14px 14px !important;
-                gap: 6px !important;
+                gap: 8px !important;
                 display: flex !important;
+                border-top: 1px solid rgba(15,23,42,0.06);
+                margin-top: 4px;
             }
+            .dark .introjs-tooltipbuttons { border-top-color: rgba(255,255,255,0.08); }
             .introjs-button {
-                padding: 10px 14px !important;
-                font-size: 0.9rem !important;
+                padding: 11px 14px !important;
+                font-size: 0.92rem !important;
                 flex: 1 !important;
                 text-align: center !important;
             }
             .introjs-skipbutton {
+                position: absolute !important;
                 top: 10px !important;
-                right: 10px !important;
+                right: 12px !important;
+                z-index: 2;
             }
             /* Стрелка на мобилках не нужна — тултип отвязан от позиции */
             .introjs-arrow { display: none !important; }
 
-            /* Оверлей отключаем — затемнение всё равно делает helperLayer,
-               а поверх него теперь сидит fixed тултип */
-            .introjs-tooltipReferenceLayer .introjs-tooltip {
-                box-shadow:
-                    0 1px 0 rgba(255,255,255,0.9) inset,
-                    0 0 0 1px rgba(15,23,42,0.06),
-                    0 12px 30px -8px rgba(0,0,0,0.4),
-                    0 28px 60px -12px rgba(0,0,0,0.5) !important;
+            /* 4. Подвинуть подсвеченный элемент так чтобы он был НАД тултипом.
+                  Если highlight оказывается за тултипом — пользователь не
+                  видит о чём речь. Добавляем нижний отступ к body. */
+            body:has(.introjs-helperLayer) {
+                padding-bottom: 280px !important;
             }
         }
     </style>
